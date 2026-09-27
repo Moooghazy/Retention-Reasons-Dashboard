@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retention Reasons Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  :root{color-scheme:dark;--we-purple:#5b2a86;--we-purple-dark:#35145f;--we-purple-light:#8b5cf6;--we-lilac:#c4b5fd;}
+  body{font-family:'Inter',sans-serif;background:radial-gradient(circle at 12% 0%,rgba(91,42,134,.28),transparent 34%),radial-gradient(circle at 90% 10%,rgba(139,92,246,.14),transparent 28%),#0f0a1a;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+  ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
+  
+  /* Segmented buttons spacing and active style */
+  .seg-btn{color:#94a3b8;padding:6px 14px;border-radius:6px;transition:all .15s ease;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;}
+  .seg-btn:hover{color:#ffffff;background:rgba(255,255,255,0.04);}
+  .seg-btn.active{background:var(--we-purple-light);color:#fff;box-shadow:0 2px 8px rgba(139,92,246,.45)}
+  
+  th.sortable:hover{color:#fff;cursor:pointer}
+  #watermark{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:50;font-size:11px;font-weight:600;letter-spacing:.02em;color:#c4b5fd;background:rgba(53,20,95,.75);border:1px solid rgba(139,92,246,.4);padding:4px 10px;border-radius:999px;backdrop-filter:blur(4px);pointer-events:none;}
+  header{background:linear-gradient(90deg,rgba(18,11,32,.97),rgba(53,20,95,.85),rgba(15,10,26,.94))!important;border-bottom-color:rgba(139,92,246,.35)!important;}
+  .we-logo-shell{width:42px;height:42px;border-radius:50%;overflow:hidden;flex:0 0 auto;box-shadow:0 6px 18px rgba(91,42,134,.5);border:2px solid rgba(196,181,253,.5);}
+  .we-logo-shell img{width:100%;height:100%;display:block;object-fit:cover;}
+  
+  .view-btn{color:#94a3b8;padding:8px 14px;border-radius:6px;transition:all .15s ease;display:inline-flex;align-items:center;justify-content:center;}
+  .view-btn:hover{color:#ffffff;background:rgba(255,255,255,0.04);}
+  .view-btn.active{background:var(--we-purple-light);color:#fff;box-shadow:0 2px 8px rgba(139,92,246,.45)}
+  
+  .competitor-card{background:rgba(30,41,59,.78);border:1px solid rgba(71,85,105,.65);border-radius:14px;padding:18px;}
+  .competitor-card h3{font-size:15px;font-weight:800;}
+  .competitor-card .competitor-total{font-size:11px;color:#94a3b8;margin-top:3px;}
+  .competitor-card.vodafone{border-top:3px solid #ef4444;}
+  .competitor-card.orange{border-top:3px solid #f97316;}
+  .competitor-card.etisalat{border-top:3px solid #22c55e;}
+  .competitor-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;}
+  .competitor-kpi{background:rgba(15,23,42,.72);border-radius:10px;padding:9px;}
+  .competitor-kpi span{display:block;font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;}
+  .competitor-kpi strong{display:block;font-size:15px;margin-top:3px;}
+  .competitor-kpi small{display:block;font-size:10px;color:#cbd5e1;margin-top:1px;}
+  .competitor-chart-wrap{height:260px;margin-top:14px;}
+  .row-total-competitor{background-color:#1e3a8a!important;color:#ffffff;font-weight:800;}
+  .row-vodafone-total{background-color:#991b1b!important;color:#ffffff;font-weight:800;}
+  .row-orange-total{background-color:#c2410c!important;color:#ffffff;font-weight:800;}
+  .row-etisalat-total{background-color:#15803d!important;color:#ffffff;font-weight:800;}
+  
+  /* Light Mode Palette & Styling */
+  html.light body{
+    background: radial-gradient(circle at 12% 0%,rgba(139,92,246,.12),transparent 34%),radial-gradient(circle at 90% 10%,rgba(91,42,134,.08),transparent 28%),#f8fafc;
+    color: #0f172a;
+  }
+  html.light header{
+    background: linear-gradient(90deg,#ffffff,#f5f3ff,#ffffff)!important;
+    border-bottom-color: rgba(139,92,246,.25)!important;
+  }
+  html.light header h1{color:#1e1b4b!important;}
+  html.light header p{color:#64748b!important;}
+  html.light section,
+  html.light .bg-slate-900\/80,
+  html.light .bg-slate-800\/60,
+  html.light .bg-slate-800\/80{
+    background-color:#ffffff!important;
+    border-color:#e2e8f0!important;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  html.light .bg-slate-950,
+  html.light .bg-slate-900{
+    background-color:#f1f5f9!important;
+    border-color:#cbd5e1!important;
+    color:#0f172a!important;
+  }
+  html.light select,
+  html.light input{
+    background-color:#ffffff!important;
+    border-color:#cbd5e1!important;
+    color:#0f172a!important;
+  }
+  html.light .seg-btn{color:#475569;}
+  html.light .seg-btn:hover{color:#0f172a;background:rgba(0,0,0,0.05);}
+  html.light .seg-btn.active{background:#7c3aed!important;color:#ffffff!important;box-shadow:0 2px 8px rgba(124,58,237,.35);}
+  html.light .view-btn{color:#475569;}
+  html.light .view-btn:hover{color:#0f172a;background:rgba(0,0,0,0.05);}
+  html.light .view-btn.active{background:#7c3aed!important;color:#ffffff!important;}
+  html.light .competitor-card{background:#ffffff!important;border-color:#e2e8f0!important;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);}
+  html.light .competitor-kpi{background:#f8fafc!important;border:1px solid #e2e8f0;}
+  html.light .text-white{color:#0f172a!important;}
+  html.light .text-slate-100{color:#0f172a!important;}
+  html.light .text-slate-200{color:#1e293b!important;}
+  html.light .text-slate-300{color:#334155!important;}
+  html.light .text-slate-400{color:#64748b!important;}
+  html.light .text-slate-500{color:#64748b!important;}
+  html.light #watermark{background:rgba(255,255,255,0.9);color:#6b21a8;border-color:rgba(124,58,237,.3);box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+  html.light thead{background-color:#f1f5f9!important;color:#475569!important;}
+  html.light tbody tr:hover{background-color:#f8fafc!important;}
+  html.light .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+  html.light .divide-slate-700\/50 > :not([hidden]) ~ :not([hidden]){border-color:#e2e8f0!important;}
+  html.light .row-total-competitor{background-color:#2563eb!important;color:#ffffff!important;}
+  html.light .row-vodafone-total{background-color:#dc2626!important;color:#ffffff!important;}
+  html.light .row-orange-total{background-color:#ea580c!important;color:#ffffff!important;}
+  html.light .row-etisalat-total{background-color:#16a34a!important;color:#ffffff!important;}
+</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen antialiased">
+<div id="watermark"><i class="fa-solid fa-signature"></i> Created by Moghazy</div>
+
+<header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3" style="padding-top:calc(env(safe-area-inset-top,0px) + .75rem)">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="we-logo-shell flex items-center justify-center bg-[#552781]">
+        <img src="We_logo.svg.webp" alt="WE logo" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('weSvgFallback').style.display='block';">
+        <svg id="weSvgFallback" class="w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+          <circle cx="50" cy="50" r="50" fill="#552781"/>
+          <!-- Official WE lowercase modern mark -->
+          <path d="M21 44 h5.5 v14.5 c0 2.5 1.8 4.2 4.2 4.2 c2.4 0 4.2-1.7 4.2-4.2 v-14.5 h5.5 v14.5 c0 2.5 1.8 4.2 4.2 4.2 c2.4 0 4.2-1.7 4.2-4.2 v-14.5 h5.5 v15.5 c0 5.8 -4.2 9.8 -10 9.8 c-3.2 0 -5.8 -1.4 -7.2 -3.7 c-1.4 2.3 -4 3.7 -7.2 3.7 c-5.8 0 -10 -4 -10 -9.8 Z" fill="#ffffff"/>
+          <path d="M57 56 c0 -7 5 -12 12.5 -12 c7.2 0 12.2 4.8 12.2 11.5 v1.5 h-19.2 c.4 3.5 3.2 5.8 7 5.8 c2.6 0 5 -1.1 6.5 -3.2 l3.8 3.2 c-2.4 3.2 -6.2 4.8 -10.5 4.8 c-7.5 0 -12.3 -4.8 -12.3 -11.6 Z m19.2 -2.5 c-.4 -3.2 -3 -5.5 -6.7 -5.5 c-3.6 0 -6.3 2.3 -6.8 5.5 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-extrabold text-lg lg:text-xl text-white flex items-center gap-2">
+          Retention Reasons Dashboard
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30">Jan – Aug</span>
+        </h1>
+        <p class="text-xs text-slate-400">Created · Retained · Canceled — by main reason & sub-reason</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 shadow-sm" title="Toggle Light / Dark Mode">
+        <i id="themeIcon" class="fa-solid fa-sun text-amber-400"></i>
+        <span id="themeText">Light Mode</span>
+      </button>
+      <button onclick="resetAll()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center gap-1.5">
+        <i class="fa-solid fa-rotate-left"></i> Reset
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="bg-slate-900/80 border-b border-slate-800 px-4 lg:px-8 py-3">
+  <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <i class="fa-solid fa-table-columns text-violet-400"></i> Dashboard View
+    </label>
+    <div class="flex items-center gap-1.5 bg-slate-950 border border-slate-700 rounded-lg p-1 text-xs w-full sm:w-auto">
+      <button id="viewReasons" onclick="setDashboardView('reasons')" class="view-btn active flex-1 sm:min-w-40 py-2 px-3 rounded-md font-semibold transition">
+        Reasons Dashboard
+      </button>
+      <button id="viewCompetitor" onclick="setDashboardView('competitor')" class="view-btn flex-1 sm:min-w-48 py-2 px-3 rounded-md font-semibold transition">
+        Competitor Offer
+      </button>
+    </div>
+    <span class="text-xs text-slate-500">Compare Vodafone, Orange and Etisalat — Created, Retained and Canceled</span>
+  </div>
+</section>
+
+<section class="bg-slate-800/60 border-b border-slate-800 px-4 lg:px-8 py-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-regular fa-calendar text-violet-400"></i> Period</label>
+      <select id="monthSel" onchange="render()" class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-violet-500">
+        <option value="ALL" selected>Jan – Aug (Cumulative)</option>
+        <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+        <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option>
+      </select>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-layer-group text-violet-400"></i> Main Reason</label>
+      <select id="catSel" onchange="render()" class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-violet-500">
+        <option value="ALL" selected>All Reasons</option>
+      </select>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-ruler text-violet-400"></i> Chart Metric</label>
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs">
+        <button id="modeVol" onclick="setMode('vol')" class="seg-btn active flex-1 py-1.5 px-3 rounded-md font-semibold transition">Volume</button>
+        <button id="modePct" onclick="setMode('pct')" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">Percentage</button>
+      </div>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-magnifying-glass text-violet-400"></i> Search Reason/Sub-Reason</label>
+      <input id="searchInput" type="text" oninput="render()" placeholder="e.g. Vodafone, Quota, Cost..." class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-violet-500">
+    </div>
+  </div>
+  <div class="mt-4 flex flex-col sm:flex-row gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-sliders text-violet-400"></i> Retention Status Metric</label>
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs w-full sm:w-auto">
+        <button id="statAll" onclick="setStatus('all')" class="seg-btn active flex-1 py-1.5 px-3 rounded-md font-semibold transition">All</button>
+        <button id="statCreation" onclick="setStatus('creation')" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">Creation</button>
+        <button id="statRetained" onclick="setStatus('retained')" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">Retained</button>
+        <button id="statCanceled" onclick="setStatus('canceled')" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">Canceled</button>
+      </div>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-tag text-violet-400"></i> Data Labels</label>
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs w-full sm:w-48">
+        <button id="labelsOff" onclick="setLabels(false)" class="seg-btn active flex-1 py-1.5 px-3 rounded-md font-semibold transition">Off</button>
+        <button id="labelsOn" onclick="setLabels(true)" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">On</button>
+      </div>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-sitemap text-violet-400"></i> Breakdown Level</label>
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs w-full sm:w-auto">
+        <button id="lvlOverall" onclick="setLevel('overall')" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">Overall Reason</button>
+        <button id="lvlMain" onclick="setLevel('main')" class="seg-btn active flex-1 py-1.5 px-3 rounded-md font-semibold transition">Main Reason</button>
+        <button id="lvlSub" onclick="setLevel('sub')" class="seg-btn flex-1 py-1.5 px-3 rounded-md font-semibold transition">Sub Reason</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="competitorSubControls" class="hidden mt-4 pt-3 border-t border-slate-700/60 flex flex-wrap items-center gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-tower-cell text-violet-400"></i> Competitor Operator</label>
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs">
+        <button id="opAll" onclick="setOperator('ALL')" class="seg-btn active py-1.5 px-3 rounded-md font-semibold transition">All Operators</button>
+        <button id="opVodafone" onclick="setOperator('Vodafone')" class="seg-btn py-1.5 px-3 rounded-md font-semibold transition text-red-400">Vodafone</button>
+        <button id="opOrange" onclick="setOperator('Orange')" class="seg-btn py-1.5 px-3 rounded-md font-semibold transition text-orange-400">Orange</button>
+        <button id="opEtisalat" onclick="setOperator('Etisalat')" class="seg-btn py-1.5 px-3 rounded-md font-semibold transition text-green-400">Etisalat</button>
+      </div>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-layer-group text-violet-400"></i> Competitor View Mode</label>
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs">
+        <button id="subModeHierarchy" onclick="setCompetitorSubMode('hierarchy')" class="seg-btn active py-1.5 px-3 rounded-md font-semibold transition">
+          <i class="fa-solid fa-folder-tree mr-1.5"></i> Operator & Rate Plans
+        </button>
+        <button id="subModePlans" onclick="setCompetitorSubMode('plans')" class="seg-btn py-1.5 px-3 rounded-md font-semibold transition">
+          <i class="fa-solid fa-list-check mr-1.5"></i> Rate Plans Only
+        </button>
+        <button id="subModeOperators" onclick="setCompetitorSubMode('operators')" class="seg-btn py-1.5 px-3 rounded-md font-semibold transition">
+          <i class="fa-solid fa-chart-pie mr-1.5"></i> Operators Only
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="competitorDashboard" class="hidden px-4 lg:px-8 py-6">
+  <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-ranking-star text-violet-400"></i> Competitor Offer Breakdown
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Direct comparison of Created, Retained and Canceled cases for each competitor. Creation % is calculated relative to total created cases across all reasons.
+        </p>
+      </div>
+      <div class="text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2">
+        <span class="font-semibold text-white">Metric:</span> <span id="competitorMetricBadge">Volume & Percentage</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="competitor-card vodafone">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h3 class="text-red-400">Vodafone</h3>
+          <div id="vodafoneTotal" class="competitor-total">Competitor Offer</div>
+        </div>
+        <i class="fa-solid fa-signal text-red-400 text-xl"></i>
+      </div>
+      <div class="competitor-kpis">
+        <div class="competitor-kpi"><span>Created</span><strong id="vodafoneCreated" class="text-red-400">0</strong><small id="vodafoneCreatedSub">0% share</small></div>
+        <div class="competitor-kpi"><span>Retained</span><strong id="vodafoneRetained" class="text-emerald-400">0</strong><small id="vodafoneRetainedSub">0% retained</small></div>
+        <div class="competitor-kpi"><span>Canceled</span><strong id="vodafoneCanceled" class="text-rose-400">0</strong><small id="vodafoneCanceledSub">0% canceled</small></div>
+      </div>
+      <div class="competitor-chart-wrap"><canvas id="vodafoneChart"></canvas></div>
+    </div>
+
+    <div class="competitor-card orange">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h3 class="text-orange-400">Orange</h3>
+          <div id="orangeTotal" class="competitor-total">Competitor Offer</div>
+        </div>
+        <i class="fa-solid fa-signal text-orange-400 text-xl"></i>
+      </div>
+      <div class="competitor-kpis">
+        <div class="competitor-kpi"><span>Created</span><strong id="orangeCreated" class="text-orange-400">0</strong><small id="orangeCreatedSub">0% share</small></div>
+        <div class="competitor-kpi"><span>Retained</span><strong id="orangeRetained" class="text-emerald-400">0</strong><small id="orangeRetainedSub">0% retained</small></div>
+        <div class="competitor-kpi"><span>Canceled</span><strong id="orangeCanceled" class="text-rose-400">0</strong><small id="orangeCanceledSub">0% canceled</small></div>
+      </div>
+      <div class="competitor-chart-wrap"><canvas id="orangeChart"></canvas></div>
+    </div>
+
+    <div class="competitor-card etisalat">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h3 class="text-green-400">Etisalat</h3>
+          <div id="etisalatTotal" class="competitor-total">Competitor Offer</div>
+        </div>
+        <i class="fa-solid fa-signal text-green-400 text-xl"></i>
+      </div>
+      <div class="competitor-kpis">
+        <div class="competitor-kpi"><span>Created</span><strong id="etisalatCreated" class="text-green-400">0</strong><small id="etisalatCreatedSub">0% share</small></div>
+        <div class="competitor-kpi"><span>Retained</span><strong id="etisalatRetained" class="text-emerald-400">0</strong><small id="etisalatRetainedSub">0% retained</small></div>
+        <div class="competitor-kpi"><span>Canceled</span><strong id="etisalatCanceled" class="text-rose-400">0</strong><small id="etisalatCanceledSub">0% canceled</small></div>
+      </div>
+      <div class="competitor-chart-wrap"><canvas id="etisalatChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 mt-6">
+    <h3 class="text-base font-bold text-white flex items-center gap-2">
+      <i class="fa-solid fa-chart-column text-violet-400"></i> Competitor Comparison
+    </h3>
+    <p class="text-xs text-slate-400 mt-1 mb-4">All three competitors on one chart for quick comparison.</p>
+    <div class="relative min-h-[360px]"><canvas id="competitorCompareChart"></canvas></div>
+  </div>
+
+  <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 mt-6 overflow-hidden">
+    <div class="mb-4">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-table text-violet-400"></i> Competitor Offers Report (<span id="competitorReportPeriod">Jan to Aug</span>)
+      </h3>
+      <p class="text-xs text-slate-400 mt-1">
+        Exact breakdown matching official retention reasons report for Vodafone, Orange, Etisalat & sub-offers.
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-950 text-slate-300 font-bold border-b border-slate-700 text-[11px] uppercase tracking-wider">
+            <th class="py-3 px-4">Offer / Sub-Offer</th>
+            <th class="py-3 px-3 text-right">Creation</th>
+            <th class="py-3 px-3 text-right">Creation %</th>
+            <th class="py-3 px-3 text-right">Retained</th>
+            <th class="py-3 px-3 text-right">Retained %</th>
+            <th class="py-3 px-3 text-right">Canceled</th>
+            <th class="py-3 px-3 text-right">Canceled %</th>
+          </tr>
+        </thead>
+        <tbody id="competitorTblBody" class="divide-y divide-slate-800 text-slate-200">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<main id="reasonsDashboard" class="px-4 lg:px-8 py-6 space-y-6">
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase"><span>Created</span><i class="fa-solid fa-plus text-violet-400"></i></div>
+      <div id="kpiCreated" class="text-2xl font-extrabold text-white mt-2">0</div>
+      <p id="kpiCreatedPct" class="text-xs text-slate-400 mt-0.5">0% of total created</p>
+    </div>
+    <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase"><span>Retained</span><i class="fa-solid fa-shield-heart text-emerald-400"></i></div>
+      <div id="kpiRetained" class="text-2xl font-extrabold text-emerald-400 mt-2">0</div>
+      <p id="kpiRetainedPct" class="text-xs text-slate-400 mt-0.5">0% of created</p>
+    </div>
+    <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase"><span>Canceled</span><i class="fa-solid fa-triangle-exclamation text-rose-400"></i></div>
+      <div id="kpiCanceled" class="text-2xl font-extrabold text-rose-400 mt-2">0</div>
+      <p id="kpiCanceledPct" class="text-xs text-slate-400 mt-0.5">0% of created</p>
+    </div>
+    <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase"><span>Top Reason</span><i class="fa-solid fa-trophy text-amber-400"></i></div>
+      <div id="kpiTop" class="text-base font-bold text-amber-300 mt-2 truncate">-</div>
+      <p id="kpiTopSub" class="text-xs text-slate-400 mt-0.5">0 created (0% share)</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 flex flex-col">
+      <h2 class="text-base font-bold text-white flex items-center gap-2 mb-1"><i class="fa-solid fa-chart-area text-violet-400"></i> Monthly Trend</h2>
+      <p class="text-xs text-slate-400 mb-3">Created / Retained / Canceled by month (Creation % relative to total monthly created volume)</p>
+      <div class="relative flex-1 min-h-[300px]"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 flex flex-col">
+      <h2 class="text-base font-bold text-white flex items-center gap-2 mb-1"><i class="fa-solid fa-chart-pie text-violet-400"></i> Outcome Split</h2>
+      <p class="text-xs text-slate-400 mb-3">Retained vs Canceled</p>
+      <div class="relative flex-1 min-h-[280px] flex items-center justify-center"><canvas id="splitChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <div>
+        <h2 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-ranking-star text-amber-400"></i> Reason Breakdown</h2>
+        <p class="text-xs text-slate-400" id="rankChartSubtitle">Grouped by selected Breakdown Level, ranked by active status metric</p>
+      </div>
+    </div>
+    <div class="relative min-h-[360px]" id="rankChartContainer"><canvas id="rankChart"></canvas></div>
+  </div>
+
+  <section class="bg-slate-800/80 border border-slate-700/60 rounded-xl overflow-hidden">
+    <div class="p-5 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-table-cells text-violet-400"></i> Detailed Dataset</h2>
+        <p class="text-xs text-slate-400">Created / Retained / Canceled & Percentages for selected period</p>
+      </div>
+      <span id="rowCount" class="text-xs font-semibold px-2.5 py-1 bg-slate-900 border border-slate-700 text-violet-400 rounded-lg">0 rows</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-300">
+        <thead class="bg-slate-900/80 uppercase text-[11px] font-bold text-slate-400 tracking-wider border-b border-slate-700">
+          <tr>
+            <th class="py-3 px-4 sortable" onclick="sortBy('name')">Reason / Sub-Reason</th>
+            <th class="py-3 px-3 text-right sortable" onclick="sortBy('created')">Created</th>
+            <th class="py-3 px-3 text-right sortable" onclick="sortBy('createdPct')">Created %</th>
+            <th class="py-3 px-3 text-right sortable" onclick="sortBy('retained')">Retained</th>
+            <th class="py-3 px-3 text-right sortable" onclick="sortBy('retainedPct')">Retained %</th>
+            <th class="py-3 px-3 text-right sortable" onclick="sortBy('canceled')">Canceled</th>
+            <th class="py-3 px-4 text-right sortable" onclick="sortBy('canceledPct')">Canceled %</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody" class="divide-y divide-slate-700/50"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const CATS=[
+["Competitor Offer",[[9364,7169,2195],[5619,3819,1800],[6009,4308,1701],[7840,5513,2327],[8087,5908,2179],[9341,6924,2417],[7587,5222,2365],[7122,4755,2367]]],
+["Competitor Offer Repeat",[[207,46,161],[144,27,117],[193,41,152],[235,70,165],[257,73,184],[347,82,265],[377,88,289],[464,99,365]]],
+["Quota Problem",[[4031,1120,2911],[3741,1228,2513],[2350,909,1441],[3091,1114,1977],[2444,891,1553],[3239,1038,2201],[3381,988,2393],[3416,1004,2412]]],
+["Personal Issue",[[1809,218,1591],[1611,207,1404],[1157,182,975],[1763,379,1384],[1610,363,1247],[1857,454,1403],[2236,495,1741],[2011,459,1552]]],
+["Traveling Outside Egypt",[[1747,59,1688],[1621,46,1575],[1143,52,1091],[1674,119,1555],[1399,115,1284],[1502,110,1392],[1453,112,1341],[1215,88,1127]]],
+["Moving to Another Place",[[1173,77,1096],[980,75,905],[742,55,687],[928,124,804],[837,96,741],[920,120,800],[887,131,756],[933,138,795]]],
+["Technical Problem",[[1023,168,855],[932,193,739],[755,149,606],[893,185,708],[779,180,599],[965,162,803],[934,166,768],[958,208,750]]],
+["Unreachable Customer",[[883,4,879],[709,7,702],[478,13,465],[491,31,460],[422,18,404],[544,6,538],[589,7,582],[626,18,608]]],
+["Created by Mistake",[[579,572,7],[382,382,0],[447,441,6],[575,569,6],[481,473,8],[600,594,6],[627,618,9],[581,577,4]]],
+["We Gold",[[290,135,155],[341,155,186],[184,90,94],[347,166,181],[246,113,133],[288,120,168],[408,158,250],[443,181,262]]],
+["Need Offer",[[197,116,81],[168,84,84],[182,86,96],[212,110,102],[176,95,81],[245,128,117],[224,99,125],[233,87,146]]]
+];
+
+const SUBS=[
+/* Competitor Offer Sub-Reasons */
+["Vodafone","Competitor Offer",[[4956,3559,1397],[3578,2330,1248],[3594,2435,1159],[4535,2977,1558],[4507,3148,1359],[5343,3960,1383],[4378,3036,1342],[4133,2881,1252]]],
+["Vodafone 200 GB","Competitor Offer",[[1870,1540,330],[1456,1147,309],[1400,1109,291],[1780,1376,404],[1958,1529,429],[2396,1959,437],[2054,1534,520],[1795,1385,410]]],
+["Vodafone 140 GB","Competitor Offer",[[1674,1351,323],[908,652,256],[1045,767,278],[1242,881,361],[1145,840,305],[1378,1107,271],[1100,879,221],[1052,800,252]]],
+["Vodafone Red","Competitor Offer",[[889,207,682],[742,140,602],[701,196,505],[955,275,680],[756,221,535],[742,204,538],[649,186,463],[661,217,444]]],
+["Vodafone 300 GB","Competitor Offer",[[419,368,51],[404,336,68],[385,306,79],[460,362,98],[550,467,83],[716,595,121],[526,401,125],[565,430,135]]],
+["Vodafone 600 GB","Competitor Offer",[[104,93,11],[67,55,12],[63,57,6],[98,83,15],[98,91,7],[111,95,16],[49,36,13],[60,49,11]]],
+["Orange","Competitor Offer",[[2938,2595,343],[1280,1058,222],[1539,1296,243],[2325,1942,383],[2542,2191,351],[2702,2310,392],[2072,1680,392],[1853,1481,372]]],
+["Orange 200 GB","Competitor Offer",[[1437,1295,142],[676,577,99],[737,631,106],[1076,910,166],[1318,1140,178],[1322,1123,199],[1062,864,198],[935,745,190]]],
+["Orange 140 GB","Competitor Offer",[[1077,968,109],[303,246,57],[457,392,65],[716,602,114],[709,612,97],[726,634,92],[636,535,101],[613,520,93]]],
+["Orange 300 GB","Competitor Offer",[[286,254,32],[210,182,28],[249,221,28],[352,299,53],[383,333,50],[499,431,68],[268,215,53],[234,182,52]]],
+["Orange 500 GB","Competitor Offer",[[74,64,10],[54,43,11],[43,36,7],[77,67,10],[110,99,11],[114,111,3],[64,59,5],[41,31,10]]],
+["Premier","Competitor Offer",[[64,14,50],[37,10,27],[53,16,37],[104,64,40],[22,7,15],[41,11,30],[42,7,35],[30,3,27]]],
+["Etisalat","Competitor Offer",[[932,818,114],[427,325,102],[546,464,82],[583,462,121],[466,350,116],[533,402,131],[418,290,128],[336,180,156]]],
+["Etisalat 200 GB","Competitor Offer",[[429,402,27],[198,167,31],[262,239,23],[266,228,38],[208,171,37],[282,231,51],[220,161,59],[137,86,51]]],
+["Etisalat 140 GB","Competitor Offer",[[395,358,37],[141,112,29],[197,183,14],[232,199,33],[183,144,39],[173,139,34],[140,106,34],[134,81,53]]],
+["Emerald","Competitor Offer",[[59,12,47],[60,18,42],[53,12,41],[60,14,46],[46,26,20],[61,15,46],[45,11,34],[49,1,48]]],
+["Etisalat 600 GB","Competitor Offer",[[49,46,3],[28,28,0],[34,30,4],[25,21,4],[29,9,20],[17,17,0],[13,12,1],[16,12,4]]],
+["Special Needs","Competitor Offer",[[331,151,180],[190,79,111],[137,72,65],[162,62,100],[310,146,164],[411,170,241],[342,128,214],[336,114,222]]],
+
+/* Quota Problem Sub-Reasons */
+["Quota Problem 140 GB","Quota Problem",[[2181,613,1568],[1545,492,1053],[1151,455,696],[1666,640,1026],[1446,515,931],[1993,644,1349],[1990,555,1435],[1982,565,1417]]],
+["Quota Problem 200 GB","Quota Problem",[[829,271,558],[793,297,496],[474,215,259],[638,239,399],[495,200,295],[715,238,477],[805,255,550],[813,271,542]]],
+["Quota Problem 250 GB","Quota Problem",[[607,164,443],[512,188,324],[322,129,193],[389,129,260],[304,115,189],[413,145,268],[491,167,324],[502,160,342]]],
+["Social Media Campaign","Quota Problem",[[414,72,342],[891,251,640],[403,110,293],[398,106,292],[199,61,138],[118,11,107],[94,11,83],[119,8,111]]],
+
+/* Personal Issue Sub-Reasons */
+["Close the Business","Personal Issue",[[966,79,887],[1003,84,919],[727,80,647],[744,131,613],[667,129,538],[800,184,616],[954,201,753],[870,186,684]]],
+["Cost","Personal Issue",[[708,116,592],[487,94,393],[342,86,256],[870,211,659],[824,211,613],[891,220,671],[1135,260,875],[986,227,759]]],
+["Back 2 School","Personal Issue",[[119,22,97],[110,28,82],[77,13,64],[133,35,98],[112,22,90],[151,50,101],[136,30,106],[145,42,103]]],
+
+/* Technical Problem Sub-Reasons */
+["Physical Instability","Technical Problem",[[174,40,134],[175,45,130],[170,32,138],[223,57,166],[179,47,132],[248,51,197],[237,61,176],[255,79,176]]],
+["BLQ","Technical Problem",[[167,27,140],[150,23,127],[132,22,110],[110,17,93],[90,21,69],[125,19,106],[123,21,102],[113,25,88]]],
+["CPE Problem","Technical Problem",[[136,26,110],[123,35,88],[117,25,92],[116,21,95],[102,23,79],[136,19,117],[139,18,121],[138,21,117]]],
+["Slowness","Technical Problem",[[132,28,104],[119,24,95],[68,20,48],[93,23,70],[102,25,77],[92,14,78],[98,18,80],[82,16,66]]],
+["Logical Instability","Technical Problem",[[112,26,86],[78,24,54],[62,16,46],[81,24,57],[55,18,37],[62,14,48],[75,12,63],[76,19,57]]]
+];
+
+// Exact Competitor Offer mapping matching uploaded Excel sheets row-for-row
+const COMPETITOR_REPORT_MAPPING = [
+  { name: "Total Competitor Offer", type: "header", source: { type: 'cat', key: 'Competitor Offer' } },
+  { name: "Vodafone Total", type: "vodafone-total", source: { type: 'sub', key: 'Vodafone' } },
+  { name: "200 GB", type: "vodafone-sub", source: { type: 'sub', key: 'Vodafone 200 GB' } },
+  { name: "140 GB", type: "vodafone-sub", source: { type: 'sub', key: 'Vodafone 140 GB' } },
+  { name: "Red", type: "vodafone-sub", source: { type: 'sub', key: 'Vodafone Red' } },
+  { name: "300 GB", type: "vodafone-sub", source: { type: 'sub', key: 'Vodafone 300 GB' } },
+  { name: "600 GB", type: "vodafone-sub", source: { type: 'sub', key: 'Vodafone 600 GB' } },
+  
+  { name: "Orange Total", type: "orange-total", source: { type: 'sub', key: 'Orange' } },
+  { name: "200 GB", type: "orange-sub", source: { type: 'sub', key: 'Orange 200 GB' } },
+  { name: "140 GB", type: "orange-sub", source: { type: 'sub', key: 'Orange 140 GB' } },
+  { name: "300 GB", type: "orange-sub", source: { type: 'sub', key: 'Orange 300 GB' } },
+  { name: "500 GB", type: "orange-sub", source: { type: 'sub', key: 'Orange 500 GB' } },
+  { name: "Premier", type: "orange-sub", source: { type: 'sub', key: 'Premier' } },
+  
+  { name: "Etisalat Total", type: "etisalat-total", source: { type: 'sub', key: 'Etisalat' } },
+  { name: "200 GB", type: "etisalat-sub", source: { type: 'sub', key: 'Etisalat 200 GB' } },
+  { name: "140 GB", type: "etisalat-sub", source: { type: 'sub', key: 'Etisalat 140 GB' } },
+  { name: "Emerald", type: "etisalat-sub", source: { type: 'sub', key: 'Emerald' } },
+  { name: "600 GB", type: "etisalat-sub", source: { type: 'sub', key: 'Etisalat 600 GB' } },
+
+  { name: "Special Needs", type: "other-sub", source: { type: 'sub', key: 'Special Needs' } },
+  { name: "Competitor Offer Repeat", type: "other-sub", source: { type: 'cat', key: 'Competitor Offer Repeat' } }
+];
+
+Chart.register(ChartDataLabels);
+let mode='vol', statusMetric='all', showLabels=false, level='main', sortKey='created', sortDir=-1;
+let selectedOperator = 'ALL';
+let competitorSubMode = 'hierarchy'; // 'hierarchy' | 'plans' | 'operators'
+let trendChart, splitChart, rankChart;
+let dashboardView='reasons';
+let competitorCharts = {};
+let competitorCompareChart;
+
+function setOperator(op){
+  selectedOperator = op;
+  ['opAll','opVodafone','opOrange','opEtisalat'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+  const activeId = op === 'ALL' ? 'opAll' : 'op' + op;
+  const activeEl = document.getElementById(activeId);
+  if(activeEl) activeEl.classList.add('active');
+  render();
+}
+
+function setCompetitorSubMode(m){
+  competitorSubMode = m;
+  ['subModeHierarchy','subModePlans','subModeOperators'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+  const idMap = { hierarchy: 'subModeHierarchy', plans: 'subModePlans', operators: 'subModeOperators' };
+  const activeEl = document.getElementById(idMap[m]);
+  if(activeEl) activeEl.classList.add('active');
+  render();
+}
+
+function setDashboardView(view){
+  dashboardView=view;
+  document.getElementById('viewReasons').classList.toggle('active', view==='reasons');
+  document.getElementById('viewCompetitor').classList.toggle('active', view==='competitor');
+  document.getElementById('reasonsDashboard').classList.toggle('hidden', view!=='reasons');
+  document.getElementById('competitorDashboard').classList.toggle('hidden', view!=='competitor');
+  
+  if(view==='competitor') renderCompetitorDashboard();
+  else render();
+}
+
+function monthRange(){
+  const v=document.getElementById('monthSel').value;
+  return v==='ALL' ? [0,1,2,3,4,5,6,7] : [parseInt(v)];
+}
+
+const MONTHLY_COMPANY_TOTALS = [21777, 13067, 13974, 18233, 18807, 21723, 17644, 16563];
+
+function getGrandTotalCreated(months){
+  let total = 0;
+  months.forEach(m => { total += MONTHLY_COMPANY_TOTALS[m]; });
+  return total;
+}
+
+function sumRow(data, months){
+  let c=0,r=0,x=0;
+  months.forEach(m=>{c+=data[m][0]; r+=data[m][1]; x+=data[m][2];});
+  return {created:c, retained:r, canceled:x};
+}
+
+function fmt(n){ return (n || 0).toLocaleString('en-US'); }
+function pct(a,b){ return b ? Number(((a/b)*100).toFixed(2)) : 0; }
+
+const cat_idx = {
+  "Competitor Offer":3,
+  "Competitor Offer Repeat":22,
+  "Quota Problem":23,
+  "Personal Issue":28,
+  "Traveling Outside Egypt":32,
+  "Moving to Another Place":33,
+  "Technical Problem":34,
+  "Unreachable Customer":40,
+  "Created by Mistake":41,
+  "We Gold":42,
+  "Need Offer":43
+};
+
+const sub_idx = {
+  "Vodafone|Competitor Offer":4,
+  "Vodafone 200 GB|Competitor Offer":5,
+  "Vodafone 140 GB|Competitor Offer":6,
+  "Vodafone Red|Competitor Offer":7,
+  "Vodafone 300 GB|Competitor Offer":8,
+  "Vodafone 600 GB|Competitor Offer":9,
+  "Orange|Competitor Offer":10,
+  "Orange 200 GB|Competitor Offer":11,
+  "Orange 140 GB|Competitor Offer":12,
+  "Orange 300 GB|Competitor Offer":13,
+  "Orange 500 GB|Competitor Offer":14,
+  "Premier|Competitor Offer":15,
+  "Etisalat|Competitor Offer":16,
+  "Etisalat 200 GB|Competitor Offer":17,
+  "Etisalat 140 GB|Competitor Offer":18,
+  "Emerald|Competitor Offer":19,
+  "Etisalat 600 GB|Competitor Offer":20,
+  "Emerald 600 GB|Competitor Offer":20,
+  "Special Needs|Competitor Offer":21,
+  "Competitor Offer Repeat|Competitor Offer":22,
+  "Quota Problem 140 GB|Quota Problem":24,
+  "Quota Problem 200 GB|Quota Problem":25,
+  "Quota Problem 250 GB|Quota Problem":26,
+  "Social Media Campaign|Quota Problem":27,
+  "Close the Business|Personal Issue":29,
+  "Cost|Personal Issue":30,
+  "Back 2 School|Personal Issue":31,
+  "Physical Instability|Technical Problem":35,
+  "BLQ|Technical Problem":36,
+  "CPE Problem|Technical Problem":37,
+  "Slowness|Technical Problem":38,
+  "Logical Instability|Technical Problem":39
+};
+
+// Exact percentages from the official source sheet
+const SOURCE_PCT = {"3":[[0.4362044067638701,0.7655916275096113,0.23440837249038873],[0.3423297185329597,0.6796583021890016,0.3203416978109984],[0.4377823109427364,0.7169246130803795,0.2830753869196206],[0.43138549576317814,0.7031887755102041,0.2968112244897959],[0.48154102655710374,0.7305552120687523,0.2694447879312477],[0.46977469322067994,0.7412482603575634,0.2587517396424366],[0.4060910988599261,0.6882825886384605,0.31171741136153946],[0.397877094972067,0.6676495366470092,0.33235046335299073],[0.42537323070156513,0.7154127507421805,0.28458724925781953]],"4":[[0.2307262309591466,0.7181194511702986,0.28188054882970137],[0.21798464725234556,0.6512017887087759,0.3487982112912241],[0.26183884598572055,0.6775180856983862,0.3224819143016138],[0.24942225156817432,0.6564498346196251,0.34355016538037486],[0.2683696558294629,0.6984690481473264,0.30153095185267365],[0.26870850935425467,0.7411566535654127,0.2588433464345873],[0.2341165765669325,0.6934673366834171,0.3065326633165829],[0.23083798882681564,0.6970723445439149,0.3029276554560852],[0.24525058829285662,0.6945523069894929,0.30544769301050706]],"5":[[0.08706386546792752,0.8235294117647058,0.17647058823529413],[0.08870476422566102,0.7877747252747253,0.21222527472527472],[0.10199621156928457,0.7921428571428571,0.20785714285714285],[0.09794211510949709,0.7730337078651686,0.22696629213483147],[0.11658925806835775,0.7808988764044944,0.21910112359550563],[0.12044860189096761,0.8176126878130217,0.1823873121869783],[0.10988599261360595,0.7468354430379747,0.25316455696202533],[0.10016759776536313,0.7715877437325905,0.22841225626740946],[0.10284980083883308,0.7872051125161466,0.21279488748385342]],"6":[[0.07798015558764615,0.8070489844683393,0.1929510155316607],[0.05531863043743146,0.7180616740088106,0.28193832599118945],[0.0761328864927874,0.7339712918660287,0.2660287081339713],[0.06828436227577858,0.7093397745571659,0.29066022544283415],[0.06817911158747171,0.7336244541484717,0.2663755458515284],[0.06930195131764233,0.8033381712626996,0.19666182873730043],[0.058877054006315904,0.7990909090909091,0.2009090909090909],[0.058770949720670394,0.7604562737642585,0.23954372623574144],[0.06660563767821799,0.7624685666387259,0.2375314333612741]],"7":[[0.041412400428564776,0.23284589426321708,0.7671541057367829],[0.045205312538077254,0.18867924528301888,0.8113207547169812],[0.05107096022147749,0.2796005706134094,0.7203994293865906],[0.0525475954660504,0.2879581151832461,0.7120418848167539],[0.04501607717041801,0.2923280423280423,0.7076719576719577],[0.03731643532488433,0.2749326145552561,0.7250673854447439],[0.03473746186372638,0.28659476117103233,0.7134052388289677],[0.036927374301675975,0.32829046898638425,0.6717095310136157],[0.04302920216435933,0.2700574241181296,0.7299425758818704]],"8":[[0.019518330460707133,0.8782816229116945,0.12171837708830549],[0.0246131351285488,0.8316831683168316,0.16831683168316833],[0.028048958181553257,0.7948051948051948,0.2051948051948052],[0.025310883679982393,0.7869565217391304,0.21304347826086956],[0.032749791592235324,0.8490909090909091,0.1509090909090909],[0.036008851337759,0.8310055865921788,0.16899441340782123],[0.02815393673392924,0.7623574144486692,0.2376425855513308],[0.03156424581005587,0.7610619469026548,0.23893805309734514],[0.028246016615596378,0.8111801242236025,0.18881987577639753]],"9":[[0.004704895886709834,0.8942307692307693,0.10576923076923077],[0.004081881320823687,0.8208955223880597,0.1791044776119403],[0.004589829520617806,0.9047619047619048,0.09523809523809523],[0.005337295036865852,0.8469387755102041,0.15306122448979592],[0.005835417410980112,0.9285714285714286,0.07142857142857142],[0.005582377791188896,0.8558558558558559,0.14414414414414414],[0.0024621313493550286,0.7346938775510204,0.2653061224489796],[0.0033519553072625698,0.8166666666666667,0.18333333333333332],[0.004493222952975473,0.86,0.14]],"10":[[0.13686122886290586,0.8832539142273655,0.11674608577263444],[0.07798221030827343,0.8265625,0.1734375],[0.11212297828937783,0.8421052631578947,0.15789473684210525],[0.12793000990425882,0.8352688172043011,0.16473118279569893],[0.15136358223174942,0.8619197482297404,0.13808025177025965],[0.13588815127740897,0.8549222797927462,0.14507772020725387],[0.11090295991007867,0.8108108108108109,0.1891891891891892],[0.1035195530726257,0.7992444684295736,0.20075553157042633],[0.11957133423208484,0.8436032693756884,0.15639673062431164]],"11":[[0.06693995434853496,0.9011830201809325,0.09881697981906751],[0.041184354819056905,0.8535502958579881,0.14644970414201183],[0.05369371994754481,0.8561736770691994,0.14382632293080055],[0.05920545834708925,0.845724907063197,0.15427509293680297],[0.07848040967012028,0.8649468892261002,0.13505311077389984],[0.06648561657614162,0.8494704992435703,0.15052950075642965],[0.056843119413370446,0.8135593220338984,0.1864406779661017],[0.05223463687150838,0.7967914438502673,0.20320855614973263],[0.05938340874917082,0.8507532406866752,0.14924675931332476]],"12":[[0.05017002841570783,0.8987929433611885,0.10120705663881151],[0.0184598513464116,0.8118811881188119,0.18811881188118812],[0.03329447763368789,0.8577680525164114,0.1422319474835886],[0.039396940684494335,0.840782122905028,0.15921787709497207],[0.042217458616172446,0.8631875881523272,0.1368124118476728],[0.036511768255884126,0.8732782369146006,0.12672176308539945],[0.03404164213456083,0.8411949685534591,0.15880503144654087],[0.034245810055865925,0.8482871125611745,0.15171288743882544],[0.03604224714284812,0.8609891159060531,0.1390108840939469]],"13":[[0.01332277449107933,0.8881118881118881,0.11188811188811189],[0.012793956378701109,0.8666666666666667,0.13333333333333333],[0.01814075477196561,0.8875502008032129,0.11244979919678715],[0.019368328381203916,0.8494318181818182,0.15056818181818182],[0.022805763963320232,0.8694516971279374,0.13054830287206268],[0.025095554214443774,0.8637274549098196,0.13627254509018036],[0.014344591339720601,0.8022388059701493,0.19776119402985073],[0.013072625698324023,0.7777777777777778,0.2222222222222222],[0.017368043654844824,0.8532849657396211,0.14671503426037888]],"14":[[0.003447151441747799,0.8648648648648649,0.13513513513513514],[0.0032898744973802853,0.7962962962962963,0.2037037037037037],[0.0031327407839137405,0.8372093023255814,0.16279069767441862],[0.004236821833388357,0.8701298701298701,0.12987012987012986],[0.0065499583184470645,0.9,0.1],[0.005733252866626433,0.9736842105263158,0.02631578947368421],[0.003425574051276562,0.921875,0.078125],[0.0022905027932960892,0.7560975609756098,0.24390243902439024],[0.004013234573259541,0.8838821490467937,0.11611785095320624]],"15":[[0.0029813201658359344,0.21875,0.78125],[0.0022541732667235286,0.2702702702702703,0.7297297297297297],[0.003861285152265773,0.3018867924528302,0.6981132075471698],[0.005722460658082976,0.6153846153846154,0.38461538461538464],[0.0013099916636894128,0.3181818181818182,0.6818181818181818],[0.0020116676725005027,0.2682926829268293,0.7317073170731707],[0.0022480329711502436,0.16666666666666666,0.8333333333333334],[0.0016759776536312849,0.1,0.9],[0.002758113650484957,0.33587786259541985,0.6641221374045801]],"16":[[0.04341547491498579,0.8776824034334764,0.1223175965665236],[0.02601437797002559,0.7611241217798594,0.2388758782201405],[0.039778522512020985,0.8498168498168498,0.15018315018315018],[0.032078793881368986,0.7924528301886793,0.20754716981132076],[0.027748005239966653,0.7510729613733905,0.24892703862660945],[0.026805471736069203,0.7542213883677298,0.24577861163227016],[0.022373280522400042,0.69377990430622,0.3062200956937799],[0.01877094972067039,0.5357142857142857,0.4642857142857143],[0.029623109562188454,0.7759962273048809,0.22400377269511906]],"17":[[0.019984161736618995,0.9370629370629371,0.06293706293706294],[0.012062873157061045,0.8434343434343434,0.15656565656565657],[0.019087862450823254,0.9122137404580153,0.08778625954198473],[0.014636293606250688,0.8571428571428571,0.14285714285714285],[0.012385375729427177,0.8221153846153846,0.1778846153846154],[0.014182257091128546,0.8191489361702128,0.18085106382978725],[0.01177541080126318,0.7318181818181818,0.2681818181818182],[0.007653631284916201,0.6277372262773723,0.3722627737226277],[0.013970983232186134,0.8416583416583416,0.15834165834165834]],"18":[[0.018400335398518656,0.9063291139240506,0.09367088607594937],[0.008590227854270745,0.7943262411347518,0.20567375886524822],[0.014352324056535044,0.9289340101522843,0.07106598984771574],[0.012765489160338945,0.8577586206896551,0.14224137931034483],[0.010896748838871026,0.7868852459016393,0.21311475409836064],[0.008700462683564674,0.8034682080924855,0.19653179190751446],[0.007493443237167478,0.7571428571428571,0.24285714285714285],[0.007486033519553073,0.6044776119402985,0.39552238805970147],[0.011085633093602455,0.8288401253918495,0.17115987460815046]],"19":[[0.0027484045278800017,0.2033898305084746,0.7966101694915254],[0.0036554161082003166,0.3,0.7],[0.003861285152265773,0.22641509433962265,0.7735849056603774],[0.003301419610432486,0.23333333333333334,0.7666666666666667],[0.002739073478623318,0.5652173913043478,0.43478260869565216],[0.003067793200563267,0.2459016393442623,0.7540983606557377],[0.0024086067548038325,0.24444444444444444,0.7555555555555555],[0.0027374301675977654,0.02040816326530612,0.9795918367346939],[0.0030649286250458443,0.2517321016166282,0.7482678983833718]],"20":[[0.0022825732519681373,0.9387755102040817,0.061224489795918366],[0.0017058608504934812,1,0],[0.002477050852396911,0.8823529411764706,0.11764705882352941],[0.0013755915043468692,0.84,0.16],[0.0017268071930451351,0.3103448275862069,0.6896551724137931],[0.0008549587608127138,1,0],[0.0006958197291655516,0.9230769230769231,0.07692307692307693],[0.000893854748603352,0.75,0.25],[0.001501564611354019,0.8293838862559242,0.17061611374407584]],"21":[[0.015419015232682722,0.4561933534743202,0.5438066465256798],[0.011575484342634336,0.41578947368421054,0.5842105263157895],[0.009981057846422847,0.5255474452554745,0.4744525547445255],[0.008913832948167713,0.38271604938271603,0.6172839506172839],[0.018458973442896272,0.47096774193548385,0.5290322580645161],[0.020669885334942666,0.41362530413625304,0.5863746958637469],[0.018305411336509127,0.3742690058479532,0.6257309941520468],[0.01877094972067039,0.3392857142857143,0.6607142857142857],[0.015261826275615759,0.4155024785939612,0.5844975214060387]],"22":[[0.0096427074113756,0.2222222222222222,0.7777777777777778],[0.00877299865968076,0.1875,0.8125],[0.01406090630919423,0.21243523316062177,0.7875647668393783],[0.01293056014086057,0.2978723404255319,0.7021276595744681],[0.015303084434917232,0.2840466926070039,0.7159533073929961],[0.017451217058941863,0.23631123919308358,0.7636887608069164],[0.020178772145800994,0.23342175066312998,0.76657824933687],[0.025921787709497206,0.21336206896551724,0.7866379310344828],[0.015532754233783558,0.23651079136690648,0.7634892086330936]],"23":[[0.18777658732007266,0.277846688166708,0.722153311833292],[0.22791519434628976,0.32825447741245656,0.6717455225875434],[0.17120792656272768,0.38680851063829785,0.6131914893617021],[0.1700781335974469,0.3604011646716273,0.6395988353283727],[0.14552816482076933,0.36456628477905073,0.6354337152209493],[0.16289478978072822,0.3204692806421735,0.6795307193578265],[0.1809666541775946,0.2922212363206152,0.7077787636793847],[0.19083798882681563,0.2939110070257611,0.7060889929742389],[0.1796506799290556,0.32273381854979954,0.6772661814502005]],"24":[[0.1015978012763777,0.2810637322329207,0.7189362677670793],[0.09412696478615816,0.31844660194174756,0.6815533980582524],[0.08385545679731896,0.3953084274543875,0.6046915725456126],[0.09166941784967536,0.38415366146458585,0.6158463385354142],[0.08610217934976777,0.3561549100968188,0.6438450899031812],[0.10023134178233756,0.32313095835423983,0.6768690416457601],[0.10651394315688059,0.27889447236180903,0.7211055276381909],[0.11072625698324022,0.28506559031281536,0.7149344096871847],[0.09685292024771955,0.32098323061487744,0.6790167693851226]],"25":[[0.038617412773093586,0.32689987937273823,0.6731001206272618],[0.04831241623004752,0.3745271122320303,0.6254728877679697],[0.034533003059886345,0.45358649789029537,0.5464135021097046],[0.0351050951909321,0.37460815047021945,0.6253918495297806],[0.02947481243301179,0.40404040404040403,0.5959595959595959],[0.03595855964594649,0.3328671328671329,0.6671328671328671],[0.043087298613713,0.3167701863354037,0.6832298136645962],[0.04541899441340782,0.3333333333333333,0.6666666666666666],[0.03881344904500483,0.35706580366774543,0.6429341963322546]],"26":[[0.028275958447850188,0.2701812191103789,0.729818780889621],[0.03119288412330937,0.3671875,0.6328125],[0.02345912866093545,0.40062111801242234,0.5993788819875776],[0.021404203807637284,0.33161953727506427,0.6683804627249358],[0.018101702989162798,0.3782894736842105,0.6217105263157895],[0.02077046871856769,0.35108958837772397,0.648910411622276],[0.02628057592463737,0.34012219959266804,0.659877800407332],[0.02804469273743017,0.3187250996015936,0.6812749003984063],[0.024691201926191293,0.338135593220339,0.661864406779661]],"27":[[0.018633251036474587,0.17391304347826086,0.8260869565217391],[0.0542829292067747,0.28170594837261503,0.7182940516273849],[0.029360338044586914,0.2729528535980149,0.7270471464019851],[0.021899416749202157,0.2663316582914573,0.7336683417085427],[0.011849470048826962,0.3065326633165829,0.6934673366834171],[0.005934419633876483,0.09322033898305085,0.9067796610169492],[0.0050313118878124495,0.11702127659574468,0.8829787234042553],[0.0066480446927374304,0.06722689075630252,0.9327731092436975],[0.019204897662536462,0.23899848254931716,0.7610015174506829]],"28":[[0.08426887781245633,0.1205085682697623,0.8794914317302377],[0.09814792250517851,0.12849162011173185,0.8715083798882681],[0.08429258341833018,0.15730337078651685,0.8426966292134831],[0.09700671288654121,0.2149744753261486,0.7850255246738513],[0.09586757175181612,0.22546583850931676,0.7745341614906832],[0.09339167169583584,0.24448034464189553,0.7555196553581045],[0.11968099341647487,0.22137745974955278,0.7786225402504472],[0.1123463687150838,0.22824465440079564,0.7717553455992043],[0.09812533777521462,0.19617190835349366,0.8038280916465064]],"29":[[0.044999301253086134,0.08178053830227744,0.9182194616977226],[0.06110637260874863,0.08374875373878365,0.9162512462612163],[0.05296517557919277,0.11004126547455295,0.889958734525447],[0.040937603169362825,0.1760752688172043,0.8239247311827957],[0.039716565440038105,0.1934032983508246,0.8065967016491754],[0.040233353450010056,0.23,0.77],[0.05106246320184125,0.21069182389937108,0.789308176100629],[0.04860335195530726,0.21379310344827587,0.7862068965517242],[0.04745302333219838,0.15956024364878918,0.8404397563512108]],"30":[[0.03298085433456002,0.1638418079096045,0.8361581920903954],[0.029669794078225904,0.19301848049281314,0.8069815195071869],[0.024916217397639516,0.25146198830409355,0.7485380116959064],[0.04787058435127105,0.2425287356321839,0.7574712643678161],[0.049065142312730736,0.25606796116504854,0.7439320388349514],[0.0448098974049487,0.24691358024691357,0.7530864197530864],[0.06075041481560777,0.2290748898678414,0.7709251101321586],[0.05508379888268156,0.2302231237322515,0.7697768762677485],[0.043143337947208156,0.22825564632388276,0.7717443536761173]],"31":[[0.00554339218335119,0.18487394957983194,0.8151260504201681],[0.006701596198367248,0.2545454545454545,0.7454545454545455],[0.005609791636310651,0.16883116883116883,0.8311688311688312],[0.007318146803125344,0.2631578947368421,0.7368421052631579],[0.006669048469691557,0.19642857142857142,0.8035714285714286],[0.007594045463689398,0.33112582781456956,0.6688741721854304],[0.007279344858962694,0.22058823529411764,0.7794117647058824],[0.008100558659217877,0.2896551724137931,0.7103448275862069],[0.006851990534089495,0.2461851475076297,0.7538148524923703]],"32":[[0.08138072390180277,0.03377218088151116,0.9662278191184889],[0.09875715852321189,0.0283775447254781,0.9716224552745218],[0.08327262130263734,0.045494313210848646,0.9545056867891514],[0.09210960713106636,0.07108721624850657,0.9289127837514934],[0.08330356079552222,0.08220157255182273,0.9177984274481773],[0.07553812110239388,0.07323568575233022,0.9267643142476698],[0.07777123588288819,0.07708189951823813,0.9229181004817619],[0.06787709497206704,0.07242798353909465,0.9275720164609054],[0.0825012654514487,0.059639271737280924,0.9403607282627191]],"33":[[0.054642008664461734,0.06564364876385337,0.9343563512361467],[0.05970512976727184,0.07653061224489796,0.923469387755102],[0.05405799213172082,0.07412398921832884,0.9258760107816711],[0.05106195664135578,0.1336206896551724,0.8663793103448276],[0.04983922829581994,0.11469534050179211,0.8853046594982079],[0.04626835646751157,0.13043478260869565,0.8695652173913043],[0.0474763153669111,0.14768883878241262,0.8523111612175873],[0.05212290502793296,0.14790996784565916,0.8520900321543409],[0.05189673654537322,0.11027027027027027,0.8897297297297297]],"34":[[0.04765453952578376,0.16422287390029325,0.8357771260997068],[0.05678079688071159,0.20708154506437768,0.7929184549356223],[0.05500509981057847,0.19735099337748344,0.8026490066225166],[0.04913612853527017,0.20716685330347145,0.7928331466965286],[0.046385613909729666,0.23106546854942234,0.7689345314505777],[0.04853148259907463,0.16787564766839377,0.8321243523316062],[0.04999197131081732,0.1777301927194861,0.8222698072805139],[0.0535195530726257,0.21711899791231734,0.7828810020876826],[0.050875648205573915,0.19491642492056913,0.8050835750794308]],"35":[[0.008105464200866446,0.22988505747126436,0.7701149425287356],[0.010661630315584257,0.2571428571428571,0.7428571428571429],[0.012385254261984556,0.18823529411764706,0.8117647058823529],[0.012270276218774074,0.2556053811659193,0.7443946188340808],[0.010658568536382041,0.26256983240223464,0.7374301675977654],[0.012472339569503117,0.2056451612903226,0.7943548387096774],[0.012685328908633517,0.25738396624472576,0.7426160337552743],[0.014245810055865922,0.30980392156862746,0.6901960784313725],[0.01168558400844924,0.24804334738109574,0.7519566526189043]],"36":[[0.007779382307728141,0.16167664670658682,0.8383233532934131],[0.009138540270500792,0.15333333333333332,0.8466666666666667],[0.009616785662246831,0.16666666666666666,0.8333333333333334],[0.006052602619126224,0.15454545454545454,0.8454545454545455],[0.0053590568060021436,0.23333333333333334,0.7666666666666667],[0.006286461476564071,0.152,0.848],[0.006583525129797142,0.17073170731707318,0.8292682926829268],[0.006312849162011173,0.22123893805309736,0.7787610619469026],[0.007141150429247065,0.17326732673267325,0.8267326732673267]],"37":[[0.00633530535240136,0.19117647058823528,0.8088235294117647],[0.007493603021810649,0.2845528455284553,0.7154471544715447],[0.008523969109718782,0.21367521367521367,0.7863247863247863],[0.0063827445801694725,0.1810344827586207,0.8189655172413793],[0.006073597713469096,0.22549019607843138,0.7745098039215687],[0.00683967008650171,0.13970588235294118,0.8602941176470589],[0.0074399186426162825,0.12949640287769784,0.8705035971223022],[0.007709497206703911,0.15217391304347827,0.8478260869565217],[0.007099788214173908,0.18669314796425024,0.8133068520357497]],"38":[[0.006148972842036614,0.21212121212121213,0.7878787878787878],[0.007249908614597295,0.20168067226890757,0.7983193277310925],[0.004954101704793822,0.29411764705882354,0.7058823529411765],[0.005117200396170353,0.24731182795698925,0.7526881720430108],[0.006073597713469096,0.24509803921568626,0.7549019607843137],[0.004626835646751157,0.15217391304347827,0.8478260869565217],[0.005245410266017235,0.1836734693877551,0.8163265306122449],[0.0045810055865921784,0.1951219512195122,0.8048780487804879],[0.0054996290963034685,0.21374045801526717,0.7862595419847328]],"39":[[0.005217310290212885,0.23214285714285715,0.7678571428571429],[0.0047520409406604115,0.3076923076923077,0.6923076923076923],[0.004516975083782603,0.25806451612903225,0.7419354838709677],[0.004456916474083856,0.2962962962962963,0.7037037037037037],[0.0032749791592235323,0.32727272727272727,0.6727272727272727],[0.0031180848923757793,0.22580645161290322,0.7741935483870968],[0.004014344591339721,0.16,0.84],[0.004245810055865922,0.25,0.75],[0.004199557685943088,0.2545757071547421,0.7454242928452579]],"40":[[0.041132901663017654,0.004530011325028313,0.9954699886749717],[0.04319483367856708,0.009873060648801129,0.9901269393511989],[0.03482442080722716,0.027196652719665274,0.9728033472803347],[0.02701661714537251,0.06313645621181263,0.9368635437881874],[0.02512802191258783,0.04265402843601896,0.957345971563981],[0.02735868034600684,0.011029411764705883,0.9889705882352942],[0.03152598619065461,0.011884550084889643,0.9881154499151104],[0.034972067039106144,0.02875399361022364,0.9712460063897763],[0.03314419109781748,0.021931674398987768,0.9780683256010122]],"41":[[0.026971630875296967,0.9879101899827288,0.012089810017271158],[0.02327281588887535,1,0],[0.032565933265335856,0.9865771812080537,0.013422818791946308],[0.03163860459997799,0.9895652173913043,0.010434782608695653],[0.028641181374300346,0.9833679833679834,0.016632016632016633],[0.030175015087507542,0.99,0.01],[0.03355992078360007,0.9856459330143541,0.014354066985645933],[0.03245810055865922,0.9931153184165232,0.0068846815834767644],[0.02991040030419417,0.9892322097378277,0.010767790262172285]],"42":[[0.013509107001444077,0.46551724137931033,0.5344827586206896],[0.020774948214938468,0.45454545454545453,0.5454545454545454],[0.0134052163776774,0.4891304347826087,0.5108695652173914],[0.019093210080334544,0.4783861671469741,0.521613832853026],[0.014648088603072526,0.45934959349593496,0.540650406504065],[0.01448400724200362,0.4166666666666667,0.5833333333333334],[0.02183803457688808,0.3872549019607843,0.6127450980392157],[0.024748603351955306,0.40857787810383744,0.5914221218961625],[0.01781265193103925,0.4389477817039654,0.5610522182960346]],"43":[[0.009176876135463734,0.5888324873096447,0.41116751269035534],[0.010235165102960887,0.5,0.5],[0.013259507504006994,0.4725274725274725,0.5274725274725275],[0.01166501595686145,0.5188679245283019,0.4811320754716981],[0.010479933309515303,0.5397727272727273,0.4602272727272727],[0.01232146449406558,0.5224489795918368,0.4775510204081633],[0.011989509179467965,0.4419642857142857,0.5580357142857143],[0.013016759776536314,0.37339055793991416,0.6266094420600858],[0.01151802893235978,0.4917532070861332,0.5082467929138669]]};
+
+function sourcePct(row, kind, months){
+  if(!row || !row.sourceRow) return null;
+  const idx = months.length===8 ? 8 : months[0];
+  const t = SOURCE_PCT[String(row.sourceRow)]?.[idx];
+  if(!t) return null;
+  const k = kind==='created' ? 0 : kind==='retained' ? 1 : 2;
+  return Number((t[k]*100).toFixed(2));
+}
+
+function rowPct(row, kind, months, fallbackDenom){
+  const v = sourcePct(row, kind, months);
+  if(v!==null) return v;
+  if(kind==='created') return pct(row.created, fallbackDenom);
+  if(kind==='retained') return pct(row.retained,row.created);
+  return pct(row.canceled,row.created);
+}
+
+function sub_idx_for_competitor(name){
+  return {Vodafone:4, Orange:10, Etisalat:16}[name] || null;
+}
+
+function competitorData(){
+  const months=monthRange();
+  const sourceMap={
+    Vodafone: SUBS.find(x=>x[0]==='Vodafone'),
+    Orange: SUBS.find(x=>x[0]==='Orange'),
+    Etisalat: SUBS.find(x=>x[0]==='Etisalat')
+  };
+  return Object.fromEntries(Object.entries(sourceMap).map(([name,row])=>[
+    name, row ? {...sumRow(row[2],months), sourceRow: sub_idx_for_competitor(name)} : {created:0,retained:0,canceled:0,sourceRow:null}
+  ]));
+}
+
+function renderCompetitorDashboard(){
+  const months = monthRange();
+  const grandTotalCreated = getGrandTotalCreated(months);
+  const data = competitorData();
+  const isPct = mode==='pct';
+  const isDark = document.documentElement.classList.contains('dark');
+  const chartGridColor = isDark ? '#1e293b' : '#e2e8f0';
+  const chartTextColor = isDark ? '#94a3b8' : '#475569';
+  const metricLabel = isPct ? 'Percentage Mode' : 'Volume Mode';
+  const periodEl = document.getElementById('monthSel');
+  const periodLabel = periodEl.value==='ALL'
+    ? 'Jan – Aug cumulative'
+    : periodEl.options[periodEl.selectedIndex].text;
+
+  const badge = document.getElementById('competitorMetricBadge');
+  if(badge) badge.textContent = metricLabel;
+  
+  const reportPeriodLabel = document.getElementById('competitorReportPeriod');
+  if(reportPeriodLabel) reportPeriodLabel.textContent = periodLabel;
+
+  const configs=[
+    {name:'Vodafone', key:'vodafone', color:'#ef4444'},
+    {name:'Orange', key:'orange', color:'#f97316'},
+    {name:'Etisalat', key:'etisalat', color:'#22c55e'}
+  ];
+
+  configs.forEach(cfg=>{
+    const d = data[cfg.name];
+    const creationPct = sourcePct(d,'created',months) ?? pct(d.created, grandTotalCreated);
+    const retainedPct = sourcePct(d,'retained',months) ?? pct(d.retained, d.created);
+    const canceledPct = sourcePct(d,'canceled',months) ?? pct(d.canceled, d.created);
+
+    const values = isPct
+      ? [creationPct, retainedPct, canceledPct]
+      : [d.created, d.retained, d.canceled];
+
+    document.getElementById(cfg.key+'Created').textContent = fmt(d.created);
+    document.getElementById(cfg.key+'CreatedSub').textContent = `${creationPct}% of total`;
+
+    document.getElementById(cfg.key+'Retained').textContent = fmt(d.retained);
+    document.getElementById(cfg.key+'RetainedSub').textContent = `${retainedPct}% retained`;
+
+    document.getElementById(cfg.key+'Canceled').textContent = fmt(d.canceled);
+    document.getElementById(cfg.key+'CanceledSub').textContent = `${canceledPct}% canceled`;
+
+    document.getElementById(cfg.key+'Total').textContent = `${periodLabel} · ${creationPct}% Creation Share`;
+
+    if(competitorCharts[cfg.key]) competitorCharts[cfg.key].destroy();
+    competitorCharts[cfg.key]=new Chart(document.getElementById(cfg.key+'Chart'),{
+      type:'bar',
+      data:{
+        labels:['Created Share','Retained %','Canceled %'],
+        datasets:[{
+          label:cfg.name,
+          data:values,
+          backgroundColor:[cfg.color+'cc','#10b981cc','#f43f5ecc'],
+          borderColor:[cfg.color,'#10b981','#f43f5e'],
+          borderWidth:1,
+          borderRadius:6
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ticks:{color:chartTextColor},grid:{display:false}},
+          y:{
+            beginAtZero:true,
+            ticks:{
+              color:chartTextColor,
+              callback:v=>isPct ? v+'%' : fmt(v)
+            },
+            grid:{color:chartGridColor}
+          }
+        },
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              label:ctx=> isPct
+                ? `${ctx.dataset.label}: ${ctx.raw}%`
+                : `${ctx.dataset.label}: ${fmt(ctx.raw)}`
+            }
+          },
+          datalabels:{
+            display:true,
+            color:isDark ? '#e2e8f0' : '#0f172a',
+            font:{weight:'700',size:10},
+            formatter:v=>isPct ? v+'%' : fmt(v)
+          }
+        }
+      }
+    });
+  });
+
+  if(competitorCompareChart) competitorCompareChart.destroy();
+  competitorCompareChart=new Chart(document.getElementById('competitorCompareChart'),{
+    type:'bar',
+    data:{
+      labels:['Created','Retained','Canceled'],
+      datasets:[
+        {
+          label:'Vodafone',
+          data:isPct
+            ? [sourcePct(data.Vodafone,'created',months) ?? pct(data.Vodafone.created, grandTotalCreated), sourcePct(data.Vodafone,'retained',months) ?? pct(data.Vodafone.retained,data.Vodafone.created), sourcePct(data.Vodafone,'canceled',months) ?? pct(data.Vodafone.canceled,data.Vodafone.created)]
+            : [data.Vodafone.created,data.Vodafone.retained,data.Vodafone.canceled],
+          backgroundColor:'#ef4444cc',
+          borderColor:'#ef4444',
+          borderWidth:1,
+          borderRadius:5
+        },
+        {
+          label:'Orange',
+          data:isPct
+            ? [sourcePct(data.Orange,'created',months) ?? pct(data.Orange.created, grandTotalCreated), sourcePct(data.Orange,'retained',months) ?? pct(data.Orange.retained,data.Orange.created), sourcePct(data.Orange,'canceled',months) ?? pct(data.Orange.canceled,data.Orange.created)]
+            : [data.Orange.created,data.Orange.retained,data.Orange.canceled],
+          backgroundColor:'#f97316cc',
+          borderColor:'#f97316',
+          borderWidth:1,
+          borderRadius:5
+        },
+        {
+          label:'Etisalat',
+          data:isPct
+            ? [sourcePct(data.Etisalat,'created',months) ?? pct(data.Etisalat.created, grandTotalCreated), sourcePct(data.Etisalat,'retained',months) ?? pct(data.Etisalat.retained,data.Etisalat.created), sourcePct(data.Etisalat,'canceled',months) ?? pct(data.Etisalat.canceled,data.Etisalat.created)]
+            : [data.Etisalat.created,data.Etisalat.retained,data.Etisalat.canceled],
+          backgroundColor:'#22c55ecc',
+          borderColor:'#22c55e',
+          borderWidth:1,
+          borderRadius:5
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        x:{ticks:{color:chartTextColor},grid:{display:false}},
+        y:{
+          beginAtZero:true,
+          ticks:{
+            color:chartTextColor,
+            callback:v=>isPct ? v+'%' : fmt(v)
+          },
+          grid:{color:chartGridColor}
+        }
+      },
+      plugins:{
+        legend:{position:'bottom',labels:{color:isDark ? '#cbd5e1' : '#334155'}},
+        tooltip:{
+          callbacks:{
+            label:ctx=> isPct
+              ? `${ctx.dataset.label}: ${ctx.raw}%`
+              : `${ctx.dataset.label}: ${fmt(ctx.raw)}`
+          }
+        },
+        datalabels:{
+          display:showLabels,
+          color:isDark ? '#e2e8f0' : '#0f172a',
+          font:{weight:'700',size:10},
+          formatter:v=>isPct ? v+'%' : fmt(v)
+        }
+      }
+    }
+  });
+
+  renderCompetitorTable(months, grandTotalCreated);
+}
+
+function renderCompetitorTable(months, grandTotalCreated){
+  const tbody = document.getElementById('competitorTblBody');
+  if(!tbody) return;
+
+  tbody.innerHTML = COMPETITOR_REPORT_MAPPING.map(r=>{
+    let dataRow = {created:0, retained:0, canceled:0};
+    if(r.source.type === 'cat') {
+      const cat = CATS.find(x => x[0] === r.source.key);
+      if(cat) dataRow = {...sumRow(cat[1], months), sourceRow: cat_idx[r.source.key] || null};
+    } else {
+      const sub = SUBS.find(x => x[0] === r.source.key);
+      if(sub) dataRow = {...sumRow(sub[2], months), sourceRow: sub_idx[r.source.key + '|Competitor Offer'] || null};
+    }
+
+    const creationPct = sourcePct(dataRow,'created',months) ?? pct(dataRow.created, grandTotalCreated);
+    const retainedPct = sourcePct(dataRow,'retained',months) ?? pct(dataRow.retained, dataRow.created);
+    const canceledPct = sourcePct(dataRow,'canceled',months) ?? pct(dataRow.canceled, dataRow.created);
+
+    let rowClass = "hover:bg-slate-700/20 transition";
+    let indent = "";
+    
+    if(r.type === "header") {
+      rowClass = "row-total-competitor";
+    } else if(r.type === "vodafone-total") {
+      rowClass = "row-vodafone-total";
+    } else if(r.type === "orange-total") {
+      rowClass = "row-orange-total";
+    } else if(r.type === "etisalat-total") {
+      rowClass = "row-etisalat-total";
+    } else {
+      indent = "pl-8 text-slate-300";
+    }
+
+    return `<tr class="${rowClass}">
+      <td class="py-2.5 px-4 ${indent}">${r.name}</td>
+      <td class="py-2.5 px-3 text-right font-medium">${fmt(dataRow.created)}</td>
+      <td class="py-2.5 px-3 text-right font-bold">${creationPct}%</td>
+      <td class="py-2.5 px-3 text-right font-medium">${fmt(dataRow.retained)}</td>
+      <td class="py-2.5 px-3 text-right font-bold">${retainedPct}%</td>
+      <td class="py-2.5 px-3 text-right font-medium">${fmt(dataRow.canceled)}</td>
+      <td class="py-2.5 px-3 text-right font-bold">${canceledPct}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function populateCatSel(){
+  const sel=document.getElementById('catSel');
+  sel.innerHTML = '<option value="ALL" selected>All Reasons</option>';
+  CATS.forEach(([name])=>{
+    const o=document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o);
+  });
+}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('modeVol').classList.toggle('active', m==='vol');
+  document.getElementById('modePct').classList.toggle('active', m==='pct');
+  render();
+}
+
+function setLabels(on){
+  showLabels = on;
+  document.getElementById('labelsOff').classList.toggle('active', !on);
+  document.getElementById('labelsOn').classList.toggle('active', on);
+  render();
+}
+
+function setLevel(l){
+  level = l;
+  ['lvlOverall','lvlMain','lvlSub'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('lvl'+l.charAt(0).toUpperCase()+l.slice(1)).classList.add('active');
+  render();
+}
+
+function dataLabelOpts(){
+  return { display: showLabels, color:'#e2e8f0', font:{weight:'700', size:10},
+    formatter: v => mode==='pct' ? v+'%' : fmt(v) };
+}
+
+function setStatus(s){
+  statusMetric=s;
+  ['statAll','statCreation','statRetained','statCanceled'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('stat'+s.charAt(0).toUpperCase()+s.slice(1)).classList.add('active');
+  render();
+}
+
+function resetAll(){
+  setDashboardView('reasons');
+  document.getElementById('monthSel').value='ALL';
+  document.getElementById('catSel').value='ALL';
+  document.getElementById('searchInput').value='';
+  mode='vol'; statusMetric='all'; showLabels=false; level='main';
+  selectedOperator = 'ALL';
+  competitorSubMode = 'hierarchy';
+  document.getElementById('modeVol').classList.add('active');
+  document.getElementById('modePct').classList.remove('active');
+  document.getElementById('labelsOff').classList.add('active');
+  document.getElementById('labelsOn').classList.remove('active');
+  ['lvlOverall','lvlMain','lvlSub'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('lvlMain').classList.add('active');
+  ['statAll','statCreation','statRetained','statCanceled'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('statAll').classList.add('active');
+  setOperator('ALL');
+  setCompetitorSubMode('hierarchy');
+  render();
+}
+
+function getSelectedCat(){ return document.getElementById('catSel').value; }
+
+const COMPETITOR_OPERATORS = [
+  {
+    operator: 'Vodafone',
+    totalKey: 'Vodafone',
+    plans: [
+      { name: 'Vodafone 200 GB', planName: '200 GB' },
+      { name: 'Vodafone 140 GB', planName: '140 GB' },
+      { name: 'Vodafone Red', planName: 'Red' },
+      { name: 'Vodafone 300 GB', planName: '300 GB' },
+      { name: 'Vodafone 600 GB', planName: '600 GB' }
+    ]
+  },
+  {
+    operator: 'Orange',
+    totalKey: 'Orange',
+    plans: [
+      { name: 'Orange 200 GB', planName: '200 GB' },
+      { name: 'Orange 140 GB', planName: '140 GB' },
+      { name: 'Orange 300 GB', planName: '300 GB' },
+      { name: 'Orange 500 GB', planName: '500 GB' },
+      { name: 'Premier', planName: 'Premier' }
+    ]
+  },
+  {
+    operator: 'Etisalat',
+    totalKey: 'Etisalat',
+    plans: [
+      { name: 'Etisalat 200 GB', planName: '200 GB' },
+      { name: 'Etisalat 140 GB', planName: '140 GB' },
+      { name: 'Emerald', planName: 'Emerald' },
+      { name: 'Etisalat 600 GB', planName: '600 GB' }
+    ]
+  }
+];
+
+function getRows(months, catSel, lvl, search){
+  let rows;
+  if(lvl==='overall'){
+    if(catSel==='ALL'){
+      const tot = CATS.reduce((acc,[n,d])=>{ const s=sumRow(d,months); acc.created+=s.created; acc.retained+=s.retained; acc.canceled+=s.canceled; return acc; }, {created:0,retained:0,canceled:0});
+      rows = [{name:'All Reasons (Overall)', displayName:'All Reasons (Overall)', ...tot}];
+    } else {
+      const cat = CATS.find(c=>c[0]===catSel);
+      rows = [{name:catSel+' (Overall)', displayName:catSel+' (Overall)', ...sumRow(cat[1],months), sourceRow:cat_idx[catSel] || null}];
+    }
+  } else if(lvl==='main'){
+    rows = catSel==='ALL'
+      ? CATS.map(([name,data])=>({name, displayName:name, ...sumRow(data,months), sourceRow:cat_idx[name] || null}))
+      : [{name:catSel, displayName:catSel, ...(()=>{const cat=CATS.find(c=>c[0]===catSel); return sumRow(cat[1],months);})(), sourceRow:cat_idx[catSel] || null}];
+  } else {
+    // Sub Reason Breakdown
+    if(catSel==='Competitor Offer'){
+      rows = [];
+      const opsToInclude = selectedOperator === 'ALL'
+        ? COMPETITOR_OPERATORS
+        : COMPETITOR_OPERATORS.filter(o => o.operator === selectedOperator);
+
+      if(competitorSubMode === 'operators'){
+        // Show only the Operators
+        opsToInclude.forEach(op => {
+          const raw = SUBS.find(x => x[0] === op.totalKey && x[1] === 'Competitor Offer');
+          if(raw){
+            rows.push({
+              name: op.operator,
+              displayName: op.operator,
+              cat: 'Competitor Offer',
+              operator: op.operator,
+              isOperator: true,
+              level: 0,
+              ...sumRow(raw[2], months),
+              sourceRow: sub_idx[op.totalKey + '|Competitor Offer'] || null
+            });
+          }
+        });
+        if(selectedOperator === 'ALL'){
+          const snRaw = SUBS.find(x => x[0] === 'Special Needs');
+          if(snRaw) {
+            rows.push({
+              name: 'Special Needs',
+              displayName: 'Special Needs',
+              cat: 'Competitor Offer',
+              operator: 'Special Needs',
+              isOperator: true,
+              level: 0,
+              ...sumRow(snRaw[2], months),
+              sourceRow: sub_idx['Special Needs|Competitor Offer'] || null
+            });
+          }
+          const repCat = CATS.find(x => x[0] === 'Competitor Offer Repeat');
+          if(repCat) {
+            rows.push({
+              name: 'Competitor Offer Repeat',
+              displayName: 'Competitor Offer Repeat',
+              cat: 'Competitor Offer',
+              operator: 'Competitor Offer Repeat',
+              isOperator: true,
+              level: 0,
+              ...sumRow(repCat[1], months),
+              sourceRow: cat_idx['Competitor Offer Repeat'] || null
+            });
+          }
+        }
+      } else if(competitorSubMode === 'plans'){
+        // Show Rate Plans without Operator totals (no double counting)
+        opsToInclude.forEach(op => {
+          op.plans.forEach(p => {
+            const raw = SUBS.find(x => x[0] === p.name && x[1] === 'Competitor Offer');
+            if(raw){
+              rows.push({
+                name: p.name,
+                displayName: selectedOperator === 'ALL' ? `${op.operator} ${p.planName}` : p.planName,
+                cat: 'Competitor Offer',
+                operator: op.operator,
+                isOperator: false,
+                level: 1,
+                ...sumRow(raw[2], months),
+                sourceRow: sub_idx[p.name + '|Competitor Offer'] || null
+              });
+            }
+          });
+        });
+      } else {
+        // Hierarchy mode: Operator followed by its Rate Plans
+        opsToInclude.forEach(op => {
+          const rawTotal = SUBS.find(x => x[0] === op.totalKey && x[1] === 'Competitor Offer');
+          if(rawTotal){
+            rows.push({
+              name: op.operator,
+              displayName: `${op.operator} (Total)`,
+              cat: 'Competitor Offer',
+              operator: op.operator,
+              isOperator: true,
+              level: 0,
+              ...sumRow(rawTotal[2], months),
+              sourceRow: sub_idx[op.totalKey + '|Competitor Offer'] || null
+            });
+          }
+          op.plans.forEach(p => {
+            const rawPlan = SUBS.find(x => x[0] === p.name && x[1] === 'Competitor Offer');
+            if(rawPlan){
+              rows.push({
+                name: p.name,
+                displayName: `↳ ${p.planName}`,
+                cat: 'Competitor Offer',
+                operator: op.operator,
+                isOperator: false,
+                level: 1,
+                ...sumRow(rawPlan[2], months),
+                sourceRow: sub_idx[p.name + '|Competitor Offer'] || null
+              });
+            }
+          });
+        });
+        if(selectedOperator === 'ALL'){
+          const snRaw = SUBS.find(x => x[0] === 'Special Needs');
+          if(snRaw) {
+            rows.push({
+              name: 'Special Needs',
+              displayName: 'Special Needs',
+              cat: 'Competitor Offer',
+              operator: 'Special Needs',
+              isOperator: true,
+              level: 0,
+              ...sumRow(snRaw[2], months),
+              sourceRow: sub_idx['Special Needs|Competitor Offer'] || null
+            });
+          }
+          const repCat = CATS.find(x => x[0] === 'Competitor Offer Repeat');
+          if(repCat) {
+            rows.push({
+              name: 'Competitor Offer Repeat',
+              displayName: 'Competitor Offer Repeat',
+              cat: 'Competitor Offer',
+              operator: 'Competitor Offer Repeat',
+              isOperator: true,
+              level: 0,
+              ...sumRow(repCat[1], months),
+              sourceRow: cat_idx['Competitor Offer Repeat'] || null
+            });
+          }
+        }
+      }
+    } else if(catSel==='ALL'){
+      rows = SUBS.map(([name,cat,data])=>({name, displayName:name, cat, ...sumRow(data,months), sourceRow:sub_idx[name+'|'+cat] || null}));
+    } else {
+      rows = SUBS.filter(([n,c])=>c===catSel).map(([name,cat,data])=>({name, displayName:name, cat, ...sumRow(data,months), sourceRow:sub_idx[name+'|'+cat] || null}));
+      if(rows.length===0){
+        const cat = CATS.find(c=>c[0]===catSel);
+        if(cat) rows = [{name:catSel, displayName:catSel, ...sumRow(cat[1],months), sourceRow:cat_idx[catSel] || null}];
+      }
+    }
+  }
+  if(search) rows = rows.filter(r=>r.displayName.toLowerCase().includes(search) || r.name.toLowerCase().includes(search));
+  return rows;
+}
+
+function renderRank(months, catSel, search){
+  const grandTotalCreated = getGrandTotalCreated(months);
+  let rows = getRows(months, catSel, level, search);
+  const isCompetitorHierarchy = (catSel === 'Competitor Offer' && level === 'sub' && competitorSubMode === 'hierarchy');
+
+  let datasets, sortMetric;
+  if(isCompetitorHierarchy){
+    // Keep hierarchical sequence: Operator above its Rate Plans
+    const labels = rows.map(r => r.displayName);
+    const vals = mode==='pct' ? rows.map(r=>rowPct(r,'created',months,grandTotalCreated)) : rows.map(r=>r.created);
+    const vals2 = mode==='pct' ? rows.map(r=>rowPct(r,'retained',months,grandTotalCreated)) : rows.map(r=>r.retained);
+    const vals3 = mode==='pct' ? rows.map(r=>rowPct(r,'canceled',months,grandTotalCreated)) : rows.map(r=>r.canceled);
+    
+    // Distinguish operator bars with higher opacity and distinct tones
+    const bgColors1 = rows.map(r => r.isOperator ? '#a855f7' : '#8b5cf699');
+    const bgColors2 = rows.map(r => r.isOperator ? '#10b981' : '#10b98199');
+    const bgColors3 = rows.map(r => r.isOperator ? '#f43f5e' : '#f43f5e99');
+
+    if(statusMetric === 'all'){
+      datasets = { labels, sets:[
+        {label: mode==='pct'?'Created % of Total':'Created', data:vals, backgroundColor:bgColors1, borderRadius: 4},
+        {label: mode==='pct'?'Retained %':'Retained', data:vals2, backgroundColor:bgColors2, borderRadius: 4},
+        {label: mode==='pct'?'Canceled %':'Canceled', data:vals3, backgroundColor:bgColors3, borderRadius: 4}
+      ]};
+    } else {
+      let chosenVals, chosenBg, lbl;
+      if(statusMetric === 'creation'){
+        chosenVals = vals;
+        chosenBg = bgColors1;
+        lbl = mode === 'pct' ? 'Created % of Total' : 'Created';
+      } else if(statusMetric === 'retained'){
+        chosenVals = vals2;
+        chosenBg = bgColors2;
+        lbl = mode === 'pct' ? 'Retained %' : 'Retained';
+      } else {
+        chosenVals = vals3;
+        chosenBg = bgColors3;
+        lbl = mode === 'pct' ? 'Canceled %' : 'Canceled';
+      }
+      datasets = { labels, sets:[ { label: lbl, data: chosenVals, backgroundColor: chosenBg, borderRadius: 4 } ] };
+    }
+  } else if(statusMetric==='all'){
+    sortMetric = r=>r.created;
+    rows.sort((a,b)=>sortMetric(b)-sortMetric(a));
+    rows = rows.slice(0,14);
+    const labels = rows.map(r=>r.displayName || r.name);
+    const vals = mode==='pct' ? rows.map(r=>rowPct(r,'created',months,grandTotalCreated)) : rows.map(r=>r.created);
+    const vals2 = mode==='pct' ? rows.map(r=>rowPct(r,'retained',months,grandTotalCreated)) : rows.map(r=>r.retained);
+    const vals3 = mode==='pct' ? rows.map(r=>rowPct(r,'canceled',months,grandTotalCreated)) : rows.map(r=>r.canceled);
+    datasets = { labels, sets:[
+      {label: mode==='pct'?'Created % of Total':'Created', data:vals, backgroundColor:'#8b5cf6cc'},
+      {label: mode==='pct'?'Retained %':'Retained', data:vals2, backgroundColor:'#10b981cc'},
+      {label: mode==='pct'?'Canceled %':'Canceled', data:vals3, backgroundColor:'#f43f5ecc'}
+    ]};
+  } else {
+    const colors = {creation:'#8b5cf6cc', retained:'#10b981cc', canceled:'#f43f5ecc'};
+    if(statusMetric==='creation') sortMetric = r=> mode==='pct' ? rowPct(r,'created',months,grandTotalCreated) : r.created;
+    else if(statusMetric==='retained') sortMetric = r=> mode==='pct' ? rowPct(r,'retained',months,grandTotalCreated) : r.retained;
+    else sortMetric = r=> mode==='pct' ? rowPct(r,'canceled',months,grandTotalCreated) : r.canceled;
+    rows.sort((a,b)=>sortMetric(b)-sortMetric(a));
+    rows = rows.slice(0,14);
+    const labels = rows.map(r=>r.displayName || r.name);
+    const label = statusMetric.charAt(0).toUpperCase()+statusMetric.slice(1) + (mode==='pct' ? (statusMetric==='creation'?' % of total':' %') : '');
+    datasets = { labels, sets:[ {label, data: rows.map(sortMetric), backgroundColor: colors[statusMetric]} ] };
+  }
+
+  // Adjust container height dynamically for comfortable reading of all sub-plans
+  const container = document.getElementById('rankChartContainer');
+  if(container){
+    const rowCount = datasets.labels.length;
+    container.style.minHeight = Math.max(340, rowCount * 28) + 'px';
+  }
+
+  if(rankChart) rankChart.destroy();
+  rankChart = new Chart(document.getElementById('rankChart'), {
+    type:'bar',
+    data:{ labels: datasets.labels, datasets: datasets.sets },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        x:{
+          ticks:{ color:'#94a3b8', callback:v=>mode==='pct'?v+'%':fmt(v) },
+          grid:{ color:'#1e293b' }
+        },
+        y:{
+          ticks:{
+            color: ctx => {
+              const lbl = datasets.labels[ctx.index] || '';
+              if(lbl.includes('(Total)') || lbl === 'Vodafone' || lbl === 'Orange' || lbl === 'Etisalat' || lbl === 'Special Needs' || lbl === 'Competitor Offer Repeat'){
+                return '#f8fafc'; // Bold white for operator headers
+              }
+              return '#94a3b8'; // Muted for sub-plans
+            },
+            font: ctx => {
+              const lbl = datasets.labels[ctx.index] || '';
+              const isOp = lbl.includes('(Total)') || lbl === 'Vodafone' || lbl === 'Orange' || lbl === 'Etisalat' || lbl === 'Special Needs' || lbl === 'Competitor Offer Repeat';
+              return { weight: isOp ? '700' : '500', size: 11 };
+            }
+          },
+          grid:{ display:false }
+        }
+      },
+      plugins:{
+        legend:{ position:'top', labels:{color:'#cbd5e1', font:{weight:'600'}} },
+        datalabels: { ...dataLabelOpts(), anchor:'end', align:'end' }
+      }
+    }
+  });
+}
+
+function renderTable(months, catSel, search){
+  const grandTotalCreated = getGrandTotalCreated(months);
+  let rows = getRows(months, catSel, level, search).map(r=>({
+    ...r, 
+    createdPct: rowPct(r,'created',months,grandTotalCreated),
+    retainedPct: rowPct(r,'retained',months,grandTotalCreated),
+    canceledPct: rowPct(r,'canceled',months,grandTotalCreated)
+  }));
+  
+  const isCompetitorHierarchy = (catSel === 'Competitor Offer' && level === 'sub' && competitorSubMode === 'hierarchy');
+  if(!isCompetitorHierarchy){
+    rows.sort((a,b)=> sortDir * (a[sortKey]-b[sortKey]) || a.name.localeCompare(b.name));
+  }
+
+  const tbody = document.getElementById('tblBody');
+  tbody.innerHTML = rows.map(r=>{
+    let nameHtml;
+    let trClass = "hover:bg-slate-700/30 transition";
+
+    if(isCompetitorHierarchy && r.isOperator){
+      trClass = "bg-slate-800/90 font-bold border-l-4 border-violet-500 text-white";
+      nameHtml = `<span class="flex items-center gap-2"><i class="fa-solid fa-tower-cell text-violet-400"></i> ${r.displayName}</span>`;
+    } else if(isCompetitorHierarchy && !r.isOperator){
+      nameHtml = `<span class="pl-7 text-slate-300">${r.displayName}</span>`;
+    } else if(r.level === 1){
+      nameHtml = `<span class="pl-6 text-slate-300">${r.displayName || r.name}</span>`;
+    } else {
+      nameHtml = `<span class="font-semibold text-white">${r.displayName || r.name}</span>`;
+    }
+
+    return `<tr class="${trClass}">
+      <td class="py-2.5 px-4">${nameHtml}</td>
+      <td class="py-2.5 px-3 text-right font-medium">${fmt(r.created)}</td>
+      <td class="py-2.5 px-3 text-right text-violet-300 font-semibold">${r.createdPct}%</td>
+      <td class="py-2.5 px-3 text-right text-emerald-400">${fmt(r.retained)}</td>
+      <td class="py-2.5 px-3 text-right text-emerald-400/80">${r.retainedPct}%</td>
+      <td class="py-2.5 px-3 text-right text-rose-400">${fmt(r.canceled)}</td>
+      <td class="py-2.5 px-4 text-right text-rose-400/80">${r.canceledPct}%</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('rowCount').textContent = rows.length+' rows';
+}
+
+function render(){
+  if(dashboardView==='competitor'){
+    renderCompetitorDashboard();
+    return;
+  }
+  const months = monthRange();
+  const grandTotalCreated = getGrandTotalCreated(months);
+  const catSel = getSelectedCat();
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  // Dynamically show/hide the Competitor Offer Sub-Controls bar
+  const compControls = document.getElementById('competitorSubControls');
+  if(compControls){
+    compControls.classList.toggle('hidden', !(catSel === 'Competitor Offer' && level === 'sub'));
+  }
+
+  let totals = {created:0, retained:0, canceled:0};
+  let topName='-', topCreated=0;
+  CATS.forEach(([name,data])=>{
+    const s = sumRow(data, months);
+    if(catSel==='ALL' || catSel===name){
+      totals.created += s.created; totals.retained += s.retained; totals.canceled += s.canceled;
+    }
+    if(s.created>topCreated){ topCreated=s.created; topName=name; }
+  });
+
+  const creationPctOfGrand = catSel==='ALL' ? 100 : (sourcePct({sourceRow:cat_idx[catSel]},'created',months) ?? pct(totals.created, grandTotalCreated));
+  document.getElementById('kpiCreated').textContent = fmt(totals.created);
+  document.getElementById('kpiCreatedPct').textContent = catSel==='ALL' 
+    ? '100% of total created' 
+    : `${creationPctOfGrand}% of total created`;
+
+  document.getElementById('kpiRetained').textContent = fmt(totals.retained);
+  document.getElementById('kpiRetainedPct').textContent = pct(totals.retained,totals.created)+'% of created';
+  document.getElementById('kpiCanceled').textContent = fmt(totals.canceled);
+  document.getElementById('kpiCanceledPct').textContent = pct(totals.canceled,totals.created)+'% of created';
+  document.getElementById('kpiTop').textContent = topName;
+  document.getElementById('kpiTopSub').textContent = `${fmt(topCreated)} created (${sourcePct({sourceRow:cat_idx[topName]},'created',months) ?? pct(topCreated, grandTotalCreated)}% share)`;
+
+  renderTrend(months, catSel);
+  renderSplit(totals);
+  renderRank(months, catSel, search);
+  renderTable(months, catSel, search);
+}
+
+function renderTrend(months, catSel){
+  // Always display the full multi-month timeline (Jan to Aug) so the trend remains continuous
+  const allMonths = [0, 1, 2, 3, 4, 5, 6, 7];
+  const lbls = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+  const grandTotalAllMonths = getGrandTotalCreated(allMonths);
+  const monthlyGrandTotals = allMonths.map(m => sourcePct({sourceRow:3},'created',[m]) ? (CATS.find(c=>c[0]==='Competitor Offer')[1][m][0] / (SOURCE_PCT['3'][m][0])) : getGrandTotalCreated([m]));
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const chartGridColor = isDark ? '#1e293b' : '#e2e8f0';
+  const chartTextColor = isDark ? '#94a3b8' : '#475569';
+
+  const perMonth = allMonths.map(m => {
+    let c = 0, r = 0, x = 0;
+    CATS.forEach(([name, data]) => {
+      if (catSel === 'ALL' || catSel === name) {
+        c += data[m][0];
+        r += data[m][1];
+        x += data[m][2];
+      }
+    });
+
+    const isAll = (catSel === 'ALL');
+    const grandC = monthlyGrandTotals[m];
+    // For specific reason: Creation % of monthly company total; For ALL reasons: monthly share of total created volume
+    const creationPctVal = isAll ? pct(c, grandTotalAllMonths) : (sourcePct({sourceRow: cat_idx[catSel]}, 'created', [m]) ?? pct(c, grandC));
+    const retainedPctVal = sourcePct({sourceRow: cat_idx[catSel]}, 'retained', [m]) ?? pct(r, c);
+    const canceledPctVal = sourcePct({sourceRow: cat_idx[catSel]}, 'canceled', [m]) ?? pct(x, c);
+
+    return {
+      c, r, x,
+      creationPct: creationPctVal,
+      retainedPct: retainedPctVal,
+      canceledPct: canceledPctVal
+    };
+  });
+
+  const isPct = (mode === 'pct');
+  const creationLineLabel = isPct ? (catSel === 'ALL' ? 'Creation Monthly Share %' : 'Creation % of Total') : 'Created Volume';
+  const lineValues = perMonth.map(p => isPct ? p.creationPct : p.c);
+  const retainedValues = perMonth.map(p => isPct ? p.retainedPct : p.r);
+  const canceledValues = perMonth.map(p => isPct ? p.canceledPct : p.x);
+
+  const sharedBarLabelOpts = {
+    display: true,
+    anchor: 'center',
+    align: 'center',
+    color: '#ffffff',
+    font: { weight: '700', size: 10 },
+    formatter: v => isPct ? Math.round(v) + '%' : fmt(v)
+  };
+
+  const lineLabelOpts = {
+    display: true,
+    anchor: 'center',
+    align: 'top',
+    offset: 6,
+    color: isDark ? '#ffffff' : '#6b21a8',
+    font: { weight: '700', size: 10 },
+    formatter: v => isPct ? Math.round(v) + '%' : fmt(v)
+  };
+
+  let datasets;
+  if(statusMetric === 'all'){
+    datasets = [
+      {
+        label: creationLineLabel,
+        data: lineValues,
+        type: 'line',
+        borderColor: '#8b5cf6',
+        backgroundColor: '#8b5cf6',
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#8b5cf6',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 1.5,
+        order: 1,
+        datalabels: lineLabelOpts
+      },
+      {
+        label: isPct ? 'Retained %' : 'Retained',
+        data: retainedValues,
+        backgroundColor: '#10b981cc',
+        borderColor: '#10b981',
+        borderWidth: 1,
+        borderRadius: 4,
+        order: 2,
+        datalabels: sharedBarLabelOpts
+      },
+      {
+        label: isPct ? 'Canceled %' : 'Canceled',
+        data: canceledValues,
+        backgroundColor: '#f43f5ecc',
+        borderColor: '#f43f5e',
+        borderWidth: 1,
+        borderRadius: 4,
+        order: 2,
+        datalabels: sharedBarLabelOpts
+      }
+    ];
+  } else {
+    const colors = {
+      creation: ['#8b5cf6cc', '#8b5cf6'],
+      retained: ['#10b981cc', '#10b981'],
+      canceled: ['#f43f5ecc', '#f43f5e']
+    };
+    let vals, lbl;
+    if(statusMetric === 'creation'){
+      vals = lineValues;
+      lbl = creationLineLabel;
+    } else if(statusMetric === 'retained'){
+      vals = retainedValues;
+      lbl = isPct ? 'Retained %' : 'Retained';
+    } else {
+      vals = canceledValues;
+      lbl = isPct ? 'Canceled %' : 'Canceled';
+    }
+    datasets = [{
+      label: lbl,
+      data: vals,
+      backgroundColor: colors[statusMetric][0],
+      borderColor: colors[statusMetric][1],
+      borderWidth: 1,
+      borderRadius: 4,
+      datalabels: sharedBarLabelOpts
+    }];
+  }
+
+  if(trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: { labels: lbls, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: { color: chartTextColor, font: { weight: '600' } },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          suggestedMax: isPct ? 80 : undefined,
+          ticks: {
+            color: chartTextColor,
+            callback: v => isPct ? v + '%' : fmt(v)
+          },
+          grid: { color: chartGridColor }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: isDark ? '#cbd5e1' : '#334155',
+            boxWidth: 14,
+            font: { weight: '600', size: 11 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => isPct ? `${ctx.dataset.label}: ${ctx.raw}%` : `${ctx.dataset.label}: ${fmt(ctx.raw)}`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderSplit(totals){
+  const isDark = document.documentElement.classList.contains('dark');
+  const data = mode==='pct'
+    ? {labels:['Retained %','Canceled %'], values:[pct(totals.retained,totals.created), pct(totals.canceled,totals.created)]}
+    : {labels:['Retained','Canceled'], values:[totals.retained, totals.canceled]};
+  if(splitChart) splitChart.destroy();
+  splitChart = new Chart(document.getElementById('splitChart'), {
+    type:'doughnut',
+    data:{ labels:data.labels, datasets:[{data:data.values, backgroundColor:['#10b981','#f43f5e'], borderColor: isDark ? '#0f172a' : '#ffffff', borderWidth:3}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{color: isDark ? '#cbd5e1' : '#334155'}}, datalabels: {...dataLabelOpts(), color:'#fff'}} }
+  });
+}
+
+function sortBy(key){
+  sortDir = (sortKey===key) ? -sortDir : -1;
+  sortKey = key;
+  render();
+}
+
+/* Theme Management */
+function toggleTheme(){
+  const isDark = document.documentElement.classList.contains('dark');
+  if(isDark){
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    localStorage.setItem('we_dashboard_theme', 'light');
+    updateThemeButton('light');
+  } else {
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('we_dashboard_theme', 'dark');
+    updateThemeButton('dark');
+  }
+  render();
+  if(dashboardView === 'competitor'){
+    renderCompetitorDashboard();
+  }
+}
+
+function updateThemeButton(theme){
+  const icon = document.getElementById('themeIcon');
+  const txt = document.getElementById('themeText');
+  const btn = document.getElementById('themeToggleBtn');
+  if(theme === 'light'){
+    if(icon) icon.className = 'fa-solid fa-moon text-indigo-500';
+    if(txt) txt.textContent = 'Dark Mode';
+    if(btn) btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-sm';
+  } else {
+    if(icon) icon.className = 'fa-solid fa-sun text-amber-400';
+    if(txt) txt.textContent = 'Light Mode';
+    if(btn) btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 shadow-sm';
+  }
+}
+
+function initTheme(){
+  const saved = localStorage.getItem('we_dashboard_theme') || 'dark';
+  if(saved === 'light'){
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    updateThemeButton('light');
+  } else {
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+    updateThemeButton('dark');
+  }
+}
+
+// Initializing application
+initTheme();
+populateCatSel();
+render();
+</script>
+</body>
+</html>
